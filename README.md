@@ -7,4 +7,4 @@ For a bunch of fastq files in a directory, run it with:
 nextflow run main.nf --readsdir path/to/fastqfiles/
 ```
 
-The pipeline executes [fastp](), saves the filtered files in `results/fastp_trimmed`, and generates a [MultiQC]() report in `results`.
+The pipeline executes [fastp](), saves the filtered files in `results/fastp_trimmed`, and generates a [MultiQC]() report in `results`. That's it!
