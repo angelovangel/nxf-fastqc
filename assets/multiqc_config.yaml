@@ -1,0 +1,4 @@
+fn_clean_exts:
+    - '.gz'
+    - '.fastq'
+    - '_L001'
