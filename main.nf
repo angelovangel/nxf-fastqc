@@ -11,7 +11,8 @@ log.info """\
          F A S T P - M U L T I Q C   P I P E L I N E    
          ===========================================
          
-         --readsdir    : ${params.readsdir}
+         --readsdir     : ${params.readsdir}
+         --fqpattern    :${params.fqpattern}
          --outdir       : ${params.outdir}
          """
          .stripIndent()
@@ -20,7 +21,7 @@ log.info """\
 reads = params.readsdir + params.fqpattern
 
 Channel 
-    .fromFilePairs( reads, checkIfExists: true, size: -1 ) // took this from Paolo, why is size here?
+    .fromFilePairs( reads, checkIfExists: true, size: -1 ) // default is 2, so set to -1 to allow any number of files
     .ifEmpty { error "Can not find any reads matching ${reads}" }
     .set{ read_pairs_ch }
     
