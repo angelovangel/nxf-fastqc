@@ -1,7 +1,7 @@
 # nextflow-fastp
 A simple fastp-MultiQC nextflow pipeline
 
-For a bunch of fastq files in a directory (for now, paired-end only), run it with:
+For a bunch of fastq files in a directory (PE or SE), run it with:
 
 ```
 nextflow run main.nf --readsdir path/to/fastqfiles/
