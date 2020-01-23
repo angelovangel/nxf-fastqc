@@ -1,7 +1,7 @@
 /* 
  * pipeline input parameters 
  */
-params.readsdir = "fastq"
+params.readsdir = "$baseDir/fastq"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 
 params.outdir = "results"
@@ -20,7 +20,8 @@ log.info """\
 reads = params.readsdir + params.fqpattern
 
 Channel 
-    .fromFilePairs( reads, checkIfExists: true )
+    .fromFilePairs( reads, checkIfExists: true, size: -1 ) // took this from Paolo, why is size here?
+    .ifEmpty { error "Can not find any reads matching ${reads}" }
     .set{ read_pairs_ch }
     
 Channel
@@ -54,10 +55,19 @@ process fastp {
     
 
     script:
-    """
-    mkdir fastp_trimmed
-    fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/${x[0]} -O fastp_trimmed/${x[1]} -j ${sample_id}_fastp.json
-    """
+    def single = x instanceof Path // this is from https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
+    if ( !single ) {
+        """
+        mkdir fastp_trimmed
+        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/${x[0]} -O fastp_trimmed/${x[1]} -j ${sample_id}_fastp.json
+        """
+    } 
+    else {
+        """
+        mkdir fastp_trimmed
+        fastp -i ${x} -o fastp_trimmed/${x} -j ${sample_id}_fastp.json
+        """
+    }
 
 }
  
