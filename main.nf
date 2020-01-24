@@ -5,19 +5,44 @@ params.readsdir = "$baseDir/fastq/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 
 params.outdir = "results"
+params.threads = 2
 params.multiqc_config = "$baseDir/assets/multiqc_config.yaml" //custom config mainly for sample names
+params.help = ""
 
-log.info """\
+if (params.help) {
+    helpMessage()
+    exit(0)
+}
 
+log.info """
+        ===========================================
          F A S T P - M U L T I Q C   P I P E L I N E    
-         ===========================================
-         
-         --readsdir     : ${params.readsdir}
-         --fqpattern    : ${params.fqpattern}
-         --outdir       : ${params.outdir}
-
+        
+         --readsdir         : ${params.readsdir}
+         --fqpattern        : ${params.fqpattern}
+         --outdir           : ${params.outdir}
+         --threads          : ${params.threads}
+         --multiqc_config   : ${params.multiqc_config}
+        ===========================================
          """
          .stripIndent()
+
+def helpMessage() {
+log.info """
+        ===========================================
+         U S A G E   
+         
+         --readsdir         : directory with fastq files, default is "fastq"
+         --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
+         --outdir           : where results will be saved, default is "results"
+         --threads          : worker threads for fastp, default is 2
+         --multiqc_config   : config file for MultiQC, default is "/assets/multiqc_config.yaml" 
+        ===========================================
+         """
+         .stripIndent()
+
+}
+
 
 
 //just in case trailing slash in readsdir not provided...
@@ -63,17 +88,17 @@ process fastp {
     
 
     script:
-    def single = x instanceof Path // this is from https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
+    def single = x instanceof Path // this is Paolo: https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
     if ( !single ) {
         """
         mkdir fastp_trimmed
-        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} -j ${sample_id}_fastp.json
+        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} -j ${sample_id}_fastp.json -w ${params.threads}
         """
     } 
     else {
         """
         mkdir fastp_trimmed
-        fastp -i ${x} -o fastp_trimmed/trim_${x} -j ${sample_id}_fastp.json
+        fastp -i ${x} -o fastp_trimmed/trim_${x} -j ${sample_id}_fastp.json -w ${params.threads}
         """
     }
 
