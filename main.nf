@@ -1,24 +1,31 @@
 /* 
  * pipeline input parameters 
  */
-params.readsdir = "$baseDir/fastq"
+params.readsdir = "$baseDir/fastq/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 
 params.outdir = "results"
 params.multiqc_config = "$baseDir/assets/multiqc_config.yaml" //custom config mainly for sample names
 
 log.info """\
+
          F A S T P - M U L T I Q C   P I P E L I N E    
          ===========================================
          
          --readsdir     : ${params.readsdir}
-         --fqpattern    :${params.fqpattern}
+         --fqpattern    : ${params.fqpattern}
          --outdir       : ${params.outdir}
+
          """
          .stripIndent()
 
+
+//just in case trailing slash in readsdir not provided...
+readsdir_repaired = "${params.readsdir}".replaceFirst(/$/, "/") 
+//println(readsdir_repaired)
+
 // build search pattern for fastq files in input dir
-reads = params.readsdir + params.fqpattern
+reads = readsdir_repaired + params.fqpattern
 
 Channel 
     .fromFilePairs( reads, checkIfExists: true, size: -1 ) // default is 2, so set to -1 to allow any number of files
