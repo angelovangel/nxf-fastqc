@@ -52,7 +52,7 @@ process fastp {
     set sample_id, file(x) from read_pairs_ch
     
     output:
-    set file("${sample_id}_fastp.json"), file('fastp_trimmed/*') into fastp_ch
+    set file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
     
 
     script:
@@ -60,13 +60,13 @@ process fastp {
     if ( !single ) {
         """
         mkdir fastp_trimmed
-        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/${x[0]} -O fastp_trimmed/${x[1]} -j ${sample_id}_fastp.json
+        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} -j ${sample_id}_fastp.json
         """
     } 
     else {
         """
         mkdir fastp_trimmed
-        fastp -i ${x} -o fastp_trimmed/${x} -j ${sample_id}_fastp.json
+        fastp -i ${x} -o fastp_trimmed/trim_${x} -j ${sample_id}_fastp.json
         """
     }
 
