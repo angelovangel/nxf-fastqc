@@ -1,0 +1,7 @@
+name: fastp-multiqc
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - fastp=0.19.6
+  - multiqc=1.7

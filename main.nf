@@ -6,7 +6,7 @@ params.fqpattern = "*_R{1,2}_001.fastq.gz"
 
 params.outdir = "results"
 params.threads = 2
-params.multiqc_config = "$baseDir/assets/multiqc_config.yaml" //custom config mainly for sample names
+params.multiqc_config = "$baseDir/multiqc_config.yaml" //custom config mainly for sample names
 params.help = ""
 
 if (params.help) {
@@ -61,7 +61,7 @@ Channel
     .fromPath(params.multiqc_config, checkIfExists: true)
     .set{ multiqc_config_ch }
 //===============================
-// some extra features
+// some extra features, but too slow
 //myDir = file(params.reads).getLast().getParent() //ugly way to get dir out of params.reads
 /*
 myDir = file(params.readsdir)
