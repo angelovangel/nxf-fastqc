@@ -2,3 +2,7 @@ fn_clean_exts:
     - '.gz'
     - '.fastq'
     - '_L001'
+
+title: "Summarized fastp report"
+subtitle: ""
+intro_text: False

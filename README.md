@@ -14,7 +14,7 @@ For all available options, try
 nextflow run main.nf --help
 ```
 
-If you have `conda` you can run the pipeline with:
+If you have `conda`, there is no need to install fastp and MultiQC, you can run the pipeline in a conda environment:
 ```
 nextflow run main.nf --readsdir path/to/fastqfiles/ -profile conda
 ```

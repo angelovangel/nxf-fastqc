@@ -4,8 +4,8 @@
 params.readsdir = "$baseDir/fastq/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 
-params.outdir = "results"
-params.threads = 2
+params.outdir = "$baseDir/results"
+//params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yaml" //custom config mainly for sample names
 params.help = ""
 
@@ -21,7 +21,6 @@ log.info """
          --readsdir         : ${params.readsdir}
          --fqpattern        : ${params.fqpattern}
          --outdir           : ${params.outdir}
-         --threads          : ${params.threads}
          --multiqc_config   : ${params.multiqc_config}
         ===========================================
          """
@@ -35,8 +34,7 @@ log.info """
          --readsdir         : directory with fastq files, default is "fastq"
          --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
          --outdir           : where results will be saved, default is "results"
-         --threads          : worker threads for fastp, default is 2
-         --multiqc_config   : config file for MultiQC, default is "/assets/multiqc_config.yaml" 
+         --multiqc_config   : config file for MultiQC, default is "multiqc_config.yaml" 
         ===========================================
          """
          .stripIndent()
@@ -92,13 +90,13 @@ process fastp {
     if ( !single ) {
         """
         mkdir fastp_trimmed
-        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} -j ${sample_id}_fastp.json -w ${params.threads}
+        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} -j ${sample_id}_fastp.json
         """
     } 
     else {
         """
         mkdir fastp_trimmed
-        fastp -i ${x} -o fastp_trimmed/trim_${x} -j ${sample_id}_fastp.json -w ${params.threads}
+        fastp -i ${x} -o fastp_trimmed/trim_${x} -j ${sample_id}_fastp.json
         """
     }
 
