@@ -3,10 +3,10 @@
  */
 params.readsdir = "$baseDir/fastq/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
-
 params.outdir = "$baseDir/results"
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yaml" //custom config mainly for sample names
+params.title = "Summarized fastp report"
 params.help = ""
 
 if (params.help) {
@@ -22,6 +22,7 @@ log.info """
          --fqpattern        : ${params.fqpattern}
          --outdir           : ${params.outdir}
          --multiqc_config   : ${params.multiqc_config}
+         --title            : ${params.title}
         ===========================================
          """
          .stripIndent()
@@ -34,7 +35,8 @@ log.info """
          --readsdir         : directory with fastq files, default is "fastq"
          --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
          --outdir           : where results will be saved, default is "results"
-         --multiqc_config   : config file for MultiQC, default is "multiqc_config.yaml" 
+         --multiqc_config   : config file for MultiQC, default is "multiqc_config.yaml"
+         --title            : report title, default is "Summarized fastp report"
         ===========================================
          """
          .stripIndent()
@@ -113,10 +115,12 @@ process multiqc {
     
     output:
     file('multiqc_report.html')
-     
+    
+    //when using --title, make sure that the --filename is explicit, otherwise
+    // multiqc uses the title string as output filename 
     script:
     """
-    multiqc --force --interactive --config $y .
+    multiqc --force --interactive --title "${params.title}" --filename "multiqc_report.html" --config $y .
     """
 } 
 

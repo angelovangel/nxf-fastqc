@@ -3,6 +3,4 @@ fn_clean_exts:
     - '.fastq'
     - '_L001'
 
-title: "Summarized fastp report"
-subtitle: ""
 intro_text: False
