@@ -14,9 +14,9 @@ For all available options, try
 nextflow run main.nf --help
 ```
 
-If you have `conda`, there is no need to install fastp and MultiQC, you can run the pipeline in a conda environment:
+If you have conda or docker, you can run the pipeline in a conda environment or in a docker container. Just add `-profile conda` or `-profile docker` to the nextflow command:
 ```
 nextflow run main.nf --readsdir path/to/fastqfiles/ -profile conda
 ```
 
-If you don't have conda or nextflow, go get them!
+If you don't have nextflow, go get it!
