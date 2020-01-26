@@ -1,5 +1,6 @@
 name: fastp-multiqc
 channels:
+  - conda-forge
   - bioconda
   - defaults
 dependencies:
