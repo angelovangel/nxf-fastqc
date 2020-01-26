@@ -1,7 +1,7 @@
 /* 
  * pipeline input parameters 
  */
-params.readsdir = "$baseDir/fastq/"
+params.readsdir = "$baseDir/testdata/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 params.outdir = "$baseDir/results"
 //params.threads = 2 //makes no sense I think, to be removed
@@ -125,3 +125,6 @@ process multiqc {
 } 
 
 //=============================
+workflow.onComplete {
+	log.info ( workflow.success ? "\nDone! Open the report in your browser --> $params.outdir/multiqc_report.html\n" : "Finished with errors!" )
+}
