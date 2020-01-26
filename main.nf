@@ -88,7 +88,7 @@ process fastp {
     
 
     script:
-    def single = x instanceof Path // this is Paolo: https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
+    def single = x instanceof Path // this is from Paolo: https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
     if ( !single ) {
         """
         mkdir fastp_trimmed
