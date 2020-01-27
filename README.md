@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/angelovangel/nextflow-fastp.svg?branch=master)](https://travis-ci.com/angelovangel/nextflow-fastp)
 # nextflow-fastp
 A simple fastp-MultiQC pipeline, written in [nextflow](https://www.nextflow.io/).
 For a bunch of fastq files in a directory (PE or SE), run it with:
