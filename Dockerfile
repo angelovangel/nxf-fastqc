@@ -3,5 +3,5 @@ MAINTAINER Angel Angelov <aangeloo@gmail.com>
 
 LABEL description="Docker image containing all requirements for the fastp-MultiQC pipeline"
 
-COPY environment.yaml .
-RUN conda env update -n root -f /environment.yaml && conda clean -a
+COPY environment.yml .
+RUN conda env update -n root -f /environment.yml && conda clean -a

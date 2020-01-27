@@ -5,7 +5,7 @@ params.readsdir = "$baseDir/testdata/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 params.outdir = "$baseDir/results"
 //params.threads = 2 //makes no sense I think, to be removed
-params.multiqc_config = "$baseDir/multiqc_config.yaml" //custom config mainly for sample names
+params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
 params.title = "Summarized fastp report"
 params.help = ""
 
@@ -35,7 +35,7 @@ log.info """
          --readsdir         : directory with fastq files, default is "fastq"
          --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
          --outdir           : where results will be saved, default is "results"
-         --multiqc_config   : config file for MultiQC, default is "multiqc_config.yaml"
+         --multiqc_config   : config file for MultiQC, default is "multiqc_config.yml"
          --title            : report title, default is "Summarized fastp report"
         ===========================================
          """
