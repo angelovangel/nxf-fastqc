@@ -1,3 +1,10 @@
+/*
+* ANSI escape codes to color output messages 
+*/
+ANSI_GREEN = "\033[1;32m"
+ANSI_RED = "\033[1;31m"
+ANSI_RESET = "\033[0m"
+
 /* 
  * pipeline input parameters 
  */
@@ -24,8 +31,8 @@ log.info """
          --multiqc_config   : ${params.multiqc_config}
          --title            : ${params.title}
         ===========================================
-        Running with profile:   ${workflow.profile}
-        Running as user:        ${workflow.userName}
+        Running with profile:   ${ANSI_GREEN}${workflow.profile}${ANSI_RESET}
+        Running as user:        ${ANSI_GREEN}${workflow.userName}${ANSI_RESET}
 
          """
          .stripIndent()
@@ -131,12 +138,17 @@ process multiqc {
 workflow.onComplete {
     if (workflow.success) {
         log.info """
-            Finished in ${workflow.duration}
-            See the report --> $params.outdir/multiqc_report.html
+            ===========================================
+            ${ANSI_GREEN}Finished in ${workflow.duration}
+            See the report here ==> ${ANSI_RESET}$params.outdir/multiqc_report.html
             """
             .stripIndent()
     }
     else {
-        log.info "Finished with errors!"
+        log.info """
+            ===========================================
+            ${ANSI_RED}Finished with errors!${ANSI_RESET}
+            """
+            .stripIndent()
     }
 }
