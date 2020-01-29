@@ -24,6 +24,9 @@ log.info """
          --multiqc_config   : ${params.multiqc_config}
          --title            : ${params.title}
         ===========================================
+        Running with profile:   ${workflow.profile}
+        Running as user:        ${workflow.userName}
+
          """
          .stripIndent()
 
@@ -126,5 +129,14 @@ process multiqc {
 
 //=============================
 workflow.onComplete {
-	log.info ( workflow.success ? "\nDone! Open the report in your browser --> $params.outdir/multiqc_report.html\n" : "Finished with errors!" )
+    if (workflow.success) {
+        log.info """
+            Finished in ${workflow.duration}
+            See the report --> $params.outdir/multiqc_report.html
+            """
+            .stripIndent()
+    }
+    else {
+        log.info "Finished with errors!"
+    }
 }
