@@ -10,7 +10,7 @@ ANSI_RESET = "\033[0m"
  */
 params.readsdir = "$baseDir/testdata/"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
-params.outdir = "$baseDir/results"
+params.outdir = "$workflow.launchDir/results"
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
 params.title = "Summarized fastp report"
