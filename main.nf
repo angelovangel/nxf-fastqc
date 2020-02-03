@@ -33,6 +33,8 @@ log.info """
         ===========================================
         Running with profile:   ${ANSI_GREEN}${workflow.profile}${ANSI_RESET}
         Running as user:        ${ANSI_GREEN}${workflow.userName}${ANSI_RESET}
+        Launch dir:             ${ANSI_GREEN}${workflow.launchDir}${ANSI_RESET}
+        Base dir:               ${ANSI_GREEN}${baseDir}${ANSI_RESET}
 
          """
          .stripIndent()
