@@ -8,7 +8,7 @@ ANSI_RESET = "\033[0m"
 /* 
  * pipeline input parameters 
  */
-params.readsdir = "$baseDir/testdata/"
+params.readsdir = ""
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
 params.outdir = "$workflow.launchDir/results"
 //params.threads = 2 //makes no sense I think, to be removed
@@ -49,7 +49,7 @@ log.info """
          --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
          --outdir           : where results will be saved, default is "results"
          --multiqc_config   : config file for MultiQC, default is "multiqc_config.yml"
-         --title            : report title, default is "Summarized fastp report"
+         --title            : MultiQC report title, default is "Summarized fastp report"
         ===========================================
          """
          .stripIndent()
