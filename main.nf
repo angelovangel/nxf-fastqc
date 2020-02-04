@@ -72,11 +72,6 @@ Channel
     .ifEmpty { error "Can not find any reads matching ${reads}" }
     .set{ read_pairs_ch }
 
-// do I need a config channel?
-Channel
-    .fromPath(params.multiqc_config, checkIfExists: true)
-    .set{ multiqc_config_ch }
-
 //===============================
 // some extra features, but too slow
 //myDir = file(params.reads).getLast().getParent() //ugly way to get dir out of params.reads
@@ -132,16 +127,18 @@ process multiqc {
        
     input:
     file x from fastp_ch.collect()
-    file y from multiqc_config_ch
     
     output:
     file('multiqc_report.html')
     
-    //when using --title, make sure that the --filename is explicit, otherwise
+    // when using --title, make sure that the --filename is explicit, otherwise
     // multiqc uses the title string as output filename 
     script:
     """
-    multiqc --force --interactive --title "${params.title}" --filename "multiqc_report.html" --config $y .
+    multiqc --force --interactive \
+    --title "${params.title}" \
+    --filename "multiqc_report.html" \
+    --config ${params.multiqc_config} .
     """
 } 
 
@@ -151,7 +148,7 @@ workflow.onComplete {
         log.info """
             ===========================================
             ${ANSI_GREEN}Finished in ${workflow.duration}
-            Processed ${ readcounts.size() } fastq files, ${datatype}
+            Processed ${ readcounts.size() } fastq files
             See the report here ==> ${ANSI_RESET}$params.outdir/multiqc_report.html
             """
             .stripIndent()
