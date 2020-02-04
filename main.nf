@@ -16,6 +16,8 @@ params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for
 params.title = "Summarized fastp report"
 params.help = ""
 
+multiqc_config = file(params.multiqc_config)
+
 if (params.help) {
     helpMessage()
     exit(0)
@@ -127,6 +129,7 @@ process multiqc {
        
     input:
     file x from fastp_ch.collect()
+    file multiqc_config
     
     output:
     file('multiqc_report.html')
@@ -138,7 +141,7 @@ process multiqc {
     multiqc --force --interactive \
     --title "${params.title}" \
     --filename "multiqc_report.html" \
-    --config ${params.multiqc_config} .
+    --config $multiqc_config .
     """
 } 
 
