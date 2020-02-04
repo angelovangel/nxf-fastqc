@@ -11,4 +11,4 @@ install:
 - sudo apt-get -qq -y install graphviz realpath
 script:
 - curl -fsSL get.nextflow.io | bash
-- ./nextflow run main.nf -profile docker
+- ./nextflow run main.nf -profile test,docker
