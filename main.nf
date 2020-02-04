@@ -35,7 +35,6 @@ log.info """
         Running as user:        ${ANSI_GREEN}${workflow.userName}${ANSI_RESET}
         Launch dir:             ${ANSI_GREEN}${workflow.launchDir}${ANSI_RESET}
         Base dir:               ${ANSI_GREEN}${baseDir}${ANSI_RESET}
-
          """
          .stripIndent()
 
@@ -64,14 +63,20 @@ readsdir_repaired = "${params.readsdir}".replaceFirst(/$/, "/")
 // build search pattern for fastq files in input dir
 reads = readsdir_repaired + params.fqpattern
 
+// get counts of found fastq files
+readcounts = file(reads)
+//println readcounts.size()
+
 Channel 
     .fromFilePairs( reads, checkIfExists: true, size: -1 ) // default is 2, so set to -1 to allow any number of files
     .ifEmpty { error "Can not find any reads matching ${reads}" }
     .set{ read_pairs_ch }
-    
+
+// do I need a config channel?
 Channel
     .fromPath(params.multiqc_config, checkIfExists: true)
     .set{ multiqc_config_ch }
+
 //===============================
 // some extra features, but too slow
 //myDir = file(params.reads).getLast().getParent() //ugly way to get dir out of params.reads
@@ -85,6 +90,7 @@ myDir.eachFile { item ->
 }
 */
 //=========================
+
 // fastp trimmed files are published, json are only sent in the channel and used only by multiqc
 process fastp {
 
@@ -93,10 +99,10 @@ process fastp {
     publishDir params.outdir, mode: 'copy', pattern: 'fastp_trimmed/*' // publish only trimmed fastq files
     
     input:
-    set sample_id, file(x) from read_pairs_ch
+    tuple sample_id, file(x) from read_pairs_ch
     
     output:
-    set file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
+    tuple file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
     
 
     script:
@@ -104,13 +110,16 @@ process fastp {
     if ( !single ) {
         """
         mkdir fastp_trimmed
-        fastp -i ${x[0]} -I ${x[1]} -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} -j ${sample_id}_fastp.json
+        fastp -i ${x[0]} -I ${x[1]} \
+        -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} \
+        -j ${sample_id}_fastp.json
         """
     } 
     else {
         """
         mkdir fastp_trimmed
-        fastp -i ${x} -o fastp_trimmed/trim_${x} -j ${sample_id}_fastp.json
+        fastp -i ${x} -o fastp_trimmed/trim_${x} \
+        -j ${sample_id}_fastp.json
         """
     }
 
@@ -142,6 +151,7 @@ workflow.onComplete {
         log.info """
             ===========================================
             ${ANSI_GREEN}Finished in ${workflow.duration}
+            Processed ${ readcounts.size() } fastq files, ${datatype}
             See the report here ==> ${ANSI_RESET}$params.outdir/multiqc_report.html
             """
             .stripIndent()
