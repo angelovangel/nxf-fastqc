@@ -1,22 +1,24 @@
 /*
-* ANSI escape codes to color output messages 
+* ANSI escape codes to color output messages, get date to use in results folder name
 */
 ANSI_GREEN = "\033[1;32m"
 ANSI_RED = "\033[1;31m"
 ANSI_RESET = "\033[0m"
-
+DATE = new java.util.Date()
+sdf = new java.text.SimpleDateFormat("yyyy-MM-dd")
+fdate = sdf.format(DATE)
+//println sdf.format(DATE)
 /* 
  * pipeline input parameters 
  */
 params.readsdir = ""
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
-params.outdir = "$workflow.launchDir/results"
+params.outdir = "$workflow.launchDir/$fdate-results"
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
 params.title = "Summarized fastp report"
 params.help = ""
 
-multiqc_config = file(params.multiqc_config)
 
 if (params.help) {
     helpMessage()
@@ -129,7 +131,6 @@ process multiqc {
        
     input:
     file x from fastp_ch.collect()
-    file multiqc_config
     
     output:
     file('multiqc_report.html')
@@ -141,7 +142,7 @@ process multiqc {
     multiqc --force --interactive \
     --title "${params.title}" \
     --filename "multiqc_report.html" \
-    --config $multiqc_config .
+    --config ${params.multiqc_config} .
     """
 } 
 
