@@ -1,13 +1,26 @@
+// FASTP-MULTIQC pipeline
+
+/*
+NXF ver 19.08+ needed because of the use of tuple instead of set
+*/
+if( !nextflow.version.matches('>=19.08') ) {
+    println "This workflow requires Nextflow version 19.08 or greater and you are running version $nextflow.version"
+    exit 1
+}
+
 /*
 * ANSI escape codes to color output messages, get date to use in results folder name
 */
 ANSI_GREEN = "\033[1;32m"
 ANSI_RED = "\033[1;31m"
 ANSI_RESET = "\033[0m"
+
+// date needed to prefix results dir
 DATE = new java.util.Date()
 sdf = new java.text.SimpleDateFormat("yyyy-MM-dd")
 fdate = sdf.format(DATE)
 //println sdf.format(DATE)
+
 /* 
  * pipeline input parameters 
  */
