@@ -32,6 +32,7 @@ params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for
 params.title = "Summarized fastp report"
 params.help = ""
 
+mqc_config = file(params.multiqc_config) // this is needed, otherwise the multiqc config file is not available in the docker image
 
 if (params.help) {
     helpMessage()
@@ -144,6 +145,7 @@ process multiqc {
        
     input:
     file x from fastp_ch.collect()
+    file mqc_config
     
     output:
     file('multiqc_report.html')
@@ -155,7 +157,7 @@ process multiqc {
     multiqc --force --interactive \
     --title "${params.title}" \
     --filename "multiqc_report.html" \
-    --config ${params.multiqc_config} .
+    --config $mqc_config .
     """
 } 
 
