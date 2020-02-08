@@ -1,0 +1,18 @@
+fn_clean_exts:
+  - '.gz'
+  - '.fastq'
+  - '_L001'
+  - '_mqc.txt'
+
+intro_text: False
+
+report_header_info:
+  - Customer: 'Customer name'
+  - Project: 'Project id'
+  - NCCT contact: 'angel.angelov@med.uni-tuebingen.de'
+  - Project Type: 'WGS'
+  - Library Prep: 'Nextera DNA Flex'
+  - Indexing: 'Nextera DNA CD Indexes'
+  - Pooling: '96 libraries per pool'
+  - Sequencing Platform: 'NextSeq 500'
+  - Sequencing Setup: 'Hi Output Kit v2.5 (300 cycles)'

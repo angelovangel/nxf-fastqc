@@ -112,10 +112,11 @@ process fastp {
     publishDir params.outdir, mode: 'copy', pattern: 'fastp_trimmed/*' // publish only trimmed fastq files
     
     input:
-    tuple sample_id, file(x) from read_pairs_ch
+        tuple sample_id, file(x) from read_pairs_ch
     
     output:
-    tuple file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
+        tuple file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
+        file("${sample_id}_fastp.json") into fastp_ch2
     
 
     script:
@@ -140,15 +141,40 @@ process fastp {
  
 //=========================
 
+/*
+* This process reads the json files from fastp (using jq)
+* sums the reads/bases from all read files!
+* and sends the stdout in the channels total_reads and total_bases. The stdout is in this case a single value.
+* These are used later in multiqc (via the --cl_config parameter)
+* to add the numbers as section comments
+*/
+
+process summary {
+    
+    input:
+        file x from fastp_ch2.collect()
+
+    output:
+        stdout into total_reads
+    
+    script:
+    """
+    jq '.summary.before_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}'
+    
+    """
+}
+
+//=========================
 process multiqc {
     publishDir params.outdir, mode:'copy'
        
     input:
-    file x from fastp_ch.collect()
-    file mqc_config
+        file x from fastp_ch.collect()
+        file mqc_config
+        val y from total_reads
     
     output:
-    file('multiqc_report.html')
+        file('multiqc_report.html')
     
     // when using --title, make sure that the --filename is explicit, otherwise
     // multiqc uses the title string as output filename 
@@ -157,7 +183,8 @@ process multiqc {
     multiqc --force --interactive \
     --title "${params.title}" \
     --filename "multiqc_report.html" \
-    --config $mqc_config .
+    --config $mqc_config \
+    --cl_config "section_comments: { fastp: 'total reads: ** ${y} **' }" .
     """
 } 
 

@@ -3,3 +3,4 @@ work/
 .nextflow/
 .DS_Store
 .nextflow.log*
+.Rhistory
