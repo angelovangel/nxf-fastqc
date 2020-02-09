@@ -110,14 +110,14 @@ process fastp {
     tag "fastp on $sample_id"
     //echo true
     publishDir params.outdir, mode: 'copy', pattern: 'fastp_trimmed/*' // publish only trimmed fastq files
-    
+
     input:
         tuple sample_id, file(x) from read_pairs_ch
     
     output:
         tuple file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
         file("${sample_id}_fastp.json") into fastp_ch2
-    
+
 
     script:
     def single = x instanceof Path // this is from Paolo: https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
@@ -150,17 +150,19 @@ process fastp {
 */
 
 process summary {
-    
+
     input:
         file x from fastp_ch2.collect()
 
     output:
-        stdout into total_reads
-    
+        stdout into total_reads //the channel contains 4 values, sep by new line
+
     script:
     """
     jq '.summary.before_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}'
-    
+    jq '.summary.after_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}'
+    jq '.summary.before_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}'
+    jq '.summary.after_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}'
     """
 }
 
@@ -171,20 +173,35 @@ process multiqc {
     input:
         file x from fastp_ch.collect()
         file mqc_config
-        val y from total_reads
-    
+        val y from total_reads // y is a string with 4 values sep by new line now
+
     output:
         file('multiqc_report.html')
-    
+
     // when using --title, make sure that the --filename is explicit, otherwise
     // multiqc uses the title string as output filename 
     script:
+
+    // the whole thing here is to format the number of reads and bases from the total_reads channel
+    def splitstring = y.split()
+
+    def t_reads_before = String.format("%,d", splitstring[0].toInteger() )
+    def t_reads_after  = String.format("%,d", splitstring[1].toInteger() )
+    def t_bases_before = String.format("%,d", splitstring[2].toInteger() )
+    def t_bases_after  = String.format("%,d", splitstring[3].toInteger() )
     """
     multiqc --force --interactive \
     --title "${params.title}" \
     --filename "multiqc_report.html" \
     --config $mqc_config \
-    --cl_config "section_comments: { fastp: 'total reads: ** ${y} **' }" .
+    --cl_config "section_comments: 
+                    { fastp: 'total reads before filter:   ** ${ t_reads_before } ** <br> 
+                              total reads  after filter:   ** ${ t_reads_after } ** <br><br>
+                              total bases before filter:   ** ${ t_bases_before } ** <br>
+                              total bases after filter:    ** ${ t_bases_after } **' 
+                    }
+                " \
+    .
     """
 } 
 
