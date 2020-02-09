@@ -195,10 +195,9 @@ process multiqc {
     --filename "multiqc_report.html" \
     --config $mqc_config \
     --cl_config "section_comments: 
-                    { fastp: 'total reads before filter:   ** ${ t_reads_before } ** <br> 
-                              total reads  after filter:   ** ${ t_reads_after } ** <br><br>
-                              total bases before filter:   ** ${ t_bases_before } ** <br>
-                              total bases after filter:    ** ${ t_bases_after } **' 
+                    { fastp: '|before|after|
+                              |-----:|----:|
+                              | ${t_reads_before} | ${t_reads_after} |' 
                     }
                 " \
     .
