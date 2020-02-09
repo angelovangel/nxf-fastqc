@@ -122,11 +122,13 @@ process fastp {
     output:
         tuple file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
         file("${sample_id}_fastp.json") into fastp_ch2
+        val seqmode into seqmode_ch
 
 
     script:
     def single = x instanceof Path // this is from Paolo: https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
     if ( !single ) {
+        seqmode = "PE"
         """
         mkdir fastp_trimmed
         fastp -i ${x[0]} -I ${x[1]} \
@@ -135,6 +137,7 @@ process fastp {
         """
     } 
     else {
+        seqmode = "SE"
         """
         mkdir fastp_trimmed
         fastp -i ${x} -o fastp_trimmed/trim_${x} \
@@ -179,6 +182,7 @@ process multiqc {
         file x from fastp_ch.collect()
         file mqc_config
         val y from total_reads // y is a string with 4 values sep by new line now
+        val seqmode from seqmode_ch // PE or SE, see process fastp
 
     output:
         file('multiqc_report.html')
@@ -200,10 +204,11 @@ process multiqc {
     --filename "multiqc_report.html" \
     --config $mqc_config \
     --cl_config "section_comments: 
-                    { fastp: 'total reads before filter: ** ${ t_reads_before } ** <br>
-                              total reads    after filter: ** ${ t_reads_after } ** <br><br>
-                              total bases before filter: ** ${ t_bases_before } ** <br>
-                              total bases    after filter: ** ${ t_bases_after } **'
+                    { fastp: 'Dataset is ** ${ seqmode } ** <br><hr>
+                              Total reads before filter: ** ${ t_reads_before } ** <br>
+                              Total reads    after filter: ** ${ t_reads_after } ** <br><br>
+                              Total bases before filter: ** ${ t_bases_before } ** <br>
+                              Total bases    after filter: ** ${ t_bases_after } **'
                     }
                 " \
     .
