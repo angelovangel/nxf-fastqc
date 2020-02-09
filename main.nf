@@ -24,7 +24,7 @@ fdate = sdf.format(DATE)
 // needed to pretty print read/bases counts
 import java.text.DecimalFormat
 df = new DecimalFormat("###,###") //TODO add symbols to fix US locale, http://tutorials.jenkov.com/java-internationalization/decimalformat.html#creating-a-decimalformat-for-a-specific-locale
-println df.format(10000000)
+//println df.format(10000000)
 
 /* 
  * pipeline input parameters 
