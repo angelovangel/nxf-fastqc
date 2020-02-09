@@ -23,7 +23,7 @@ fdate = sdf.format(DATE)
 
 // needed to pretty print read/bases counts
 import java.text.DecimalFormat
-df = new DecimalFormat("###,###")
+df = new DecimalFormat("###,###") //TODO add symbols to fix US locale, http://tutorials.jenkov.com/java-internationalization/decimalformat.html#creating-a-decimalformat-for-a-specific-locale
 println df.format(10000000)
 
 /* 
@@ -191,9 +191,9 @@ process multiqc {
     def splitstring = y.split()
 
     def t_reads_before = df.format( splitstring[0].toInteger() )
-    def t_reads_after  = String.format("%,d", splitstring[1].toInteger() )
-    def t_bases_before = String.format("%,d", splitstring[2].toInteger() )
-    def t_bases_after  = String.format("%,d", splitstring[3].toInteger() )
+    def t_reads_after  = df.format( splitstring[1].toInteger() )
+    def t_bases_before = df.format( splitstring[2].toInteger() )
+    def t_bases_after  = df.format( splitstring[3].toInteger() )
     """
     multiqc --force --interactive \
     --title "${params.title}" \
