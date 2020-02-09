@@ -21,6 +21,11 @@ sdf = new java.text.SimpleDateFormat("yyyy-MM-dd")
 fdate = sdf.format(DATE)
 //println sdf.format(DATE)
 
+// needed to pretty print read/bases counts
+import java.text.DecimalFormat
+df = new DecimalFormat("###,###")
+println df.format(10000000)
+
 /* 
  * pipeline input parameters 
  */
@@ -185,7 +190,7 @@ process multiqc {
     // the whole thing here is to format the number of reads and bases from the total_reads channel
     def splitstring = y.split()
 
-    def t_reads_before = String.format("%,d", splitstring[0].toInteger() )
+    def t_reads_before = df.format( splitstring[0].toInteger() )
     def t_reads_after  = String.format("%,d", splitstring[1].toInteger() )
     def t_bases_before = String.format("%,d", splitstring[2].toInteger() )
     def t_bases_after  = String.format("%,d", splitstring[3].toInteger() )
