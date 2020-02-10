@@ -24,7 +24,23 @@ fdate = sdf.format(DATE)
 // needed to pretty print read/bases counts
 import java.text.DecimalFormat
 df = new DecimalFormat("###,###") //TODO add symbols to fix US locale, http://tutorials.jenkov.com/java-internationalization/decimalformat.html#creating-a-decimalformat-for-a-specific-locale
-//println df.format(10000000)
+//println df.format( 5.13e+23.toBigInteger() )
+
+/*
+
+in bash this works OK:
+LC_NUMERIC=en_GB.UTF-8 printf "%'.0f\n" 1.345e+12
+
+or in ksh (only separately, not as part of a pipe or with xargs)
+printf '%#d\n' 105000000
+gives 
+105M directly! works for G, T, P ...why not in bash?
+
+even this works!!!
+printf "%#d" 12e+12
+
+so no need for java classes
+*/
 
 /* 
  * pipeline input parameters 
@@ -173,10 +189,17 @@ process summary {
 
     script:
     """
-    jq '.summary.before_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}'
-    jq '.summary.after_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}'
-    jq '.summary.before_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}'
-    jq '.summary.after_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}'
+    #!/usr/bin/env ksh
+
+    jq '.summary.before_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}' > treads-before.tmp
+    jq '.summary.after_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}' > treads-after.tmp
+    jq '.summary.before_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}' > tbases-before.tmp
+    jq '.summary.after_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}' > tbases-after.tmp
+    
+    printf "%#d\n" \$(cat treads-before.tmp)
+    printf "%#d\n" \$(cat treads-after.tmp)
+    printf "%#d\n" \$(cat tbases-before.tmp)
+    printf "%#d\n" \$(cat tbases-after.tmp)
     """
 }
 
@@ -187,7 +210,7 @@ process multiqc {
     input:
         file x from fastp_ch.collect()
         file mqc_config
-        val y from total_reads // y is a string with 4 values sep by new line now
+        val y from total_reads // y is a string with 4 values sep by new line now, but still length 1
         val seqmode from seqmode_ch // PE or SE, see process fastp
 
     output:
@@ -197,11 +220,11 @@ process multiqc {
     // multiqc uses the title string as output filename 
     script:
 
-    // the whole thing here is to format the number of reads and bases from the total_reads channel
+    // currently y is of length 1, the split gets the values in a list
     def splitstring = y.split()
 
-    def t_reads_before = df.format( splitstring[0].toInteger() )
-    def t_reads_after  = df.format( splitstring[1].toInteger() )
+    //def t_reads_before = df.format( splitstring[0].toInteger() )
+    //def t_reads_after  = df.format( splitstring[1].toInteger() )
     //def t_bases_before = df.format( splitstring[2].toInteger() )
     //def t_bases_after  = df.format( splitstring[3].toInteger() )
     """
@@ -211,8 +234,10 @@ process multiqc {
     --config $mqc_config \
     --cl_config "section_comments: 
                     { fastp: '*This is ${ seqmode } data *<br>
-                              Total reads before filter: ** ${ t_reads_before } ** <br>
-                              Total reads    after filter: ** ${ t_reads_after } ** '
+                              Total reads before filter: ** ${ splitstring[0] } ** <br>
+                              Total reads    after filter: ** ${ splitstring[1] } ** <br>
+                              Total bases before filter: ** ${ splitstring[2] } ** <br>
+                              Total bases    after filter: ** ${ splitstring[3] } **'
                     }
                 " \
     .
