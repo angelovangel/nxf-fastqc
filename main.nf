@@ -202,8 +202,8 @@ process multiqc {
 
     def t_reads_before = df.format( splitstring[0].toInteger() )
     def t_reads_after  = df.format( splitstring[1].toInteger() )
-    def t_bases_before = df.format( splitstring[2].toInteger() )
-    def t_bases_after  = df.format( splitstring[3].toInteger() )
+    //def t_bases_before = df.format( splitstring[2].toInteger() )
+    //def t_bases_after  = df.format( splitstring[3].toInteger() )
     """
     multiqc --force --interactive \
     --title "${params.title}" \
@@ -212,9 +212,7 @@ process multiqc {
     --cl_config "section_comments: 
                     { fastp: '*This is ${ seqmode } data *<br>
                               Total reads before filter: ** ${ t_reads_before } ** <br>
-                              Total reads    after filter: ** ${ t_reads_after } ** <br><br>
-                              Total bases before filter: ** ${ t_bases_before } ** <br>
-                              Total bases    after filter: ** ${ t_bases_after } **'
+                              Total reads    after filter: ** ${ t_reads_after } ** '
                     }
                 " \
     .
