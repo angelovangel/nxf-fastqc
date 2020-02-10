@@ -47,25 +47,31 @@ if (params.help) {
 log.info """
         ===========================================
          F A S T P - M U L T I Q C   P I P E L I N E    
-        
+
+         Used parameters:
+        -------------------------------------------
          --readsdir         : ${params.readsdir}
          --fqpattern        : ${params.fqpattern}
          --outdir           : ${params.outdir}
          --multiqc_config   : ${params.multiqc_config}
          --title            : ${params.title}
-        ===========================================
-        Running with profile:   ${ANSI_GREEN}${workflow.profile}${ANSI_RESET}
-        Running as user:        ${ANSI_GREEN}${workflow.userName}${ANSI_RESET}
-        Launch dir:             ${ANSI_GREEN}${workflow.launchDir}${ANSI_RESET}
-        Base dir:               ${ANSI_GREEN}${baseDir}${ANSI_RESET}
+
+         Runtime data:
+        -------------------------------------------
+         Running with profile:   ${ANSI_GREEN}${workflow.profile}${ANSI_RESET}
+         Running as user:        ${ANSI_GREEN}${workflow.userName}${ANSI_RESET}
+         Launch dir:             ${ANSI_GREEN}${workflow.launchDir}${ANSI_RESET}
+         Base dir:               ${ANSI_GREEN}${baseDir}${ANSI_RESET}
          """
          .stripIndent()
 
 def helpMessage() {
 log.info """
         ===========================================
-         U S A G E   
-         
+         F A S T P - M U L T I Q C   P I P E L I N E
+  
+         Usage:
+        -------------------------------------------
          --readsdir         : directory with fastq files, default is "fastq"
          --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
          --outdir           : where results will be saved, default is "results"
@@ -204,7 +210,7 @@ process multiqc {
     --filename "multiqc_report.html" \
     --config $mqc_config \
     --cl_config "section_comments: 
-                    { fastp: 'Dataset is ** ${ seqmode } ** <br><hr>
+                    { fastp: '*This is ${ seqmode } data *<br>
                               Total reads before filter: ** ${ t_reads_before } ** <br>
                               Total reads    after filter: ** ${ t_reads_after } ** <br><br>
                               Total bases before filter: ** ${ t_bases_before } ** <br>
