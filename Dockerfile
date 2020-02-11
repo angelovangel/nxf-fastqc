@@ -5,4 +5,5 @@ LABEL description="Docker image containing all requirements for the fastp-MultiQ
 
 COPY environment.yml .
 RUN conda env update -n root -f environment.yml && conda clean -a
+RUN apt-get update && apt-get install -y ksh
 RUN echo "See you!"

@@ -1,4 +1,4 @@
 .git
 .nextflow*
 work
-results
+*results
