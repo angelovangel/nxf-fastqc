@@ -190,16 +190,15 @@ process summary {
     script:
     """
     #!/usr/bin/env ksh
+    
+    # prefer to keep the tmp files in the scratch for reference
 
     jq '.summary.before_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}' > treads-before.tmp
     jq '.summary.after_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}' > treads-after.tmp
     jq '.summary.before_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}' > tbases-before.tmp
     jq '.summary.after_filtering.total_bases' $x | awk '{sum+=\$0} END{print sum}' > tbases-after.tmp
     
-    printf "%#d\n" \$(cat treads-before.tmp)
-    printf "%#d\n" \$(cat treads-after.tmp)
-    printf "%#d\n" \$(cat tbases-before.tmp)
-    printf "%#d\n" \$(cat tbases-after.tmp)
+    cat treads-before.tmp treads-after.tmp tbases-before.tmp tbases-after.tmp | xargs siformat.sh
     """
 }
 
@@ -223,10 +222,6 @@ process multiqc {
     // currently y is of length 1, the split gets the values in a list
     def splitstring = y.split()
 
-    //def t_reads_before = df.format( splitstring[0].toInteger() )
-    //def t_reads_after  = df.format( splitstring[1].toInteger() )
-    //def t_bases_before = df.format( splitstring[2].toInteger() )
-    //def t_bases_after  = df.format( splitstring[3].toInteger() )
     """
     multiqc --force --interactive \
     --title "${params.title}" \
