@@ -4,3 +4,4 @@ work/
 .DS_Store
 .nextflow.log*
 .Rhistory
+.vscode
