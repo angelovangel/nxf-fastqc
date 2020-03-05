@@ -1,5 +1,5 @@
 work/
-*results/
+results*
 .nextflow/
 .DS_Store
 .nextflow.log*
