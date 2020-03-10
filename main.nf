@@ -45,9 +45,9 @@ so no need for java classes
 /* 
  * pipeline input parameters 
  */
-params.readsdir = ""
+params.readsdir = "fastq"
+params.outdir = "${params.readsdir}/results-fastp"
 params.fqpattern = "*_R{1,2}_001.fastq.gz"
-params.outdir = "$workflow.launchDir/results-fastp"
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
 params.title = "Summarized fastp report"
