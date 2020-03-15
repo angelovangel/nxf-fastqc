@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/angelovangel/nextflow-fastp.svg?branch=master)](https://travis-ci.com/angelovangel/nextflow-fastp)
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.08.0-brightgreen.svg)](https://www.nextflow.io/)
+
 
 # nextflow-fastp
 A simple fastp-MultiQC pipeline, written in [nextflow](https://www.nextflow.io/).
