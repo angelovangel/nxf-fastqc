@@ -219,7 +219,7 @@ process multiqc {
     // multiqc uses the title string as output filename 
     script:
 
-    // currently y is of length 1, the split gets the values in a list
+    // currently y is of length 1, the split gets the values in a list (see string split() method in groovy)
     def splitstring = y.split()
 
     """
