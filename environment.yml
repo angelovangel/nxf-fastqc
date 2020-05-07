@@ -1,4 +1,4 @@
-name: fastp-multiqc
+name: nextflow-fastp
 channels:
   - conda-forge
   - bioconda

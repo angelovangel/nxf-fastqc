@@ -191,6 +191,10 @@ process summary {
     """
     #!/usr/bin/env ksh
     
+    # check if jq installed, relevant only in local envs
+    command -v jq >/dev/null 2>&1 || \
+    { echo >&2 "jq required but not installed, install it or use -profile docker or conda. Aborting."; exit 1;}
+    
     # prefer to keep the tmp files in the scratch for reference
 
     jq '.summary.before_filtering.total_reads' $x | awk '{sum+=\$0} END{print sum}' > treads-before.tmp
