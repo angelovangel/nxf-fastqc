@@ -112,10 +112,16 @@ reads = readsdir_repaired + params.fqpattern
 readcounts = file(reads)
 //println readcounts.size()
 
+// channel for read pairs --> fastp
 Channel 
     .fromFilePairs( reads, checkIfExists: true, size: -1 ) // default is 2, so set to -1 to allow any number of files
     .ifEmpty { error "Can not find any reads matching ${reads}" }
     .set{ read_pairs_ch }
+
+// channel for reads --> seqtools
+Channel
+    .fromPath( reads, checkIfExists: true )
+    .set { reads_ch }
 
 //===============================
 // some extra features, but too slow
@@ -208,7 +214,7 @@ process summary {
 
 //=========================
 process multiqc {
-    publishDir params.outdir, mode:'copy'
+    publishDir params.outdir, mode: 'copy'
        
     input:
         file x from fastp_ch.collect()
@@ -242,6 +248,27 @@ process multiqc {
     .
     """
 } 
+
+//=============================
+Channel.fromPath('bin/fastq-stats-report.Rmd').set{ fastq_stats_report_ch }
+
+process seqtools {
+    publishDir params.outdir, mode: 'copy'
+
+    input:
+        file x from reads_ch.collect()
+        file 'fastq-stats-report.Rmd' from fastq_stats_report_ch
+
+    output:
+        file 'fastq-stats-report.html'
+        file "fastq-stats.csv"
+        file "fastq-stats.xlsx"
+    
+    script:
+    """
+    seqtools.R $x
+    """
+}
 
 //=============================
 workflow.onComplete {

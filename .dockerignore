@@ -1,5 +1,6 @@
 .git
 .nextflow*
+bin*
 work
 results*
 testdata*
