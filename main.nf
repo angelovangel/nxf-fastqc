@@ -224,11 +224,11 @@ process multiqc {
 
     output:
         file('multiqc_report.html')
+        file('multiqc_report_data/multiqc_general_stats.txt')
 
     // when using --title, make sure that the --filename is explicit, otherwise
     // multiqc uses the title string as output filename 
     script:
-
     // currently y is of length 1, the split gets the values in a list (see string split() method in groovy)
     def splitstring = y.split()
 
@@ -242,7 +242,11 @@ process multiqc {
                               Total reads before filter: ** ${ splitstring[0] } ** <br>
                               Total reads    after filter: ** ${ splitstring[1] } ** <br>
                               Total bases before filter: ** ${ splitstring[2] } ** <br>
-                              Total bases    after filter: ** ${ splitstring[3] } **'
+                              Total bases    after filter: ** ${ splitstring[3] } ** <br> <br>
+                              See also the seqTools report: 
+                              <a href="fastq-stats-report.html" target="_blank">fastq-stats-report.html</a>, 
+                              which contains per-read data about Phred-score and k-mer distribution, N50 etc. <br>
+                              The raw data from both reports (as *.csv files) can be found in the results folder.'
                     }
                 " \
     .
