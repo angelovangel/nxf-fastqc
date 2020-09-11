@@ -254,7 +254,7 @@ process multiqc {
 } 
 
 //=============================
-Channel.fromPath('bin/fastq-stats-report.Rmd').set{ fastq_stats_report_ch }
+Channel.fromPath("${baseDir}/bin/fastq-stats-report.Rmd").set{ fastq_stats_report_ch }
 
 process seqtools {
     publishDir params.outdir, mode: 'copy'
