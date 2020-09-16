@@ -50,7 +50,7 @@ get_nx <- function(qqobj, n) {
 	v.sorted <- rev(sort(v))
 	return(list(
 		sum_len = sum(v),
-		nx = v.sorted[cumsum(v.sorted) >= sum(v.sorted) * n][1]
+		nx = v.sorted[cumsum(as.numeric(v.sorted)) >= sum(as.numeric(v.sorted)) * n][1]
 	))
 	
 }
