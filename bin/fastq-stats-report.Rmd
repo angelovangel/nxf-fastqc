@@ -59,28 +59,28 @@ get_nx <- function(qqobj, n) {
 #=======================================================================
 # start by executing fastqq on the input fqfiles, which are supplied as params by the calling script
 
-# for parallelization of the fastqq call --> use mclapply + Reduce()
+# for parallelization of the fastqq call --> use mclapply
 # # mclapply will not work on windows!
-#if(Sys.info()[['sysname']] == "Windows") {
-	qq <- fastqq(params$fqfiles, k = 3)
-#} else {
-#	qq <- Reduce( mergeFastqq, mclapply(params$fqfiles, fastqq, k = 3) )
-#}
+if(Sys.info()[['sysname']] == "Windows") {
+	qq <- lapply(params$fqfiles, fastqq, k = 3)
+} else {
+	qq <- mclapply(params$fqfiles, fastqq, k = 3)
+}
 
 # because fastqq does not error
-if(nFiles(qq) == 0) {
+if(length(qq) == 0) {
 	stop("No valid fastq file found")
 }
 
 df <-	data.frame(
-			file = basename(qq@filenames),
-			num_seqs = qq@nReads,
-			sum_len = sapply(1:qq@nFiles, function(x) { get_nx(qq[x], 0.5)$sum_len } ), # total nucleotides
-			min_len = seqLen(qq)[1, ],
-			max_len = seqLen(qq)[2, ],
-			n50 = sapply(1:qq@nFiles, function(x) { get_nx(qq[x], 0.5)$nx } ),
-			q20_percent = sapply(1:qq@nFiles, function(x) { get_q(qq[x], 21) } ),
-			q30_percent = sapply(1:qq@nFiles, function(x) { get_q(qq[x], 31) } ),
+			file = basename(params$fqfiles),
+			num_seqs = sapply(qq, seqTools::nReads),
+			sum_len = sapply(1:length(qq), function(x) { get_nx(qq[[x]], 0.5)$sum_len } ), # total nucleotides
+			min_len = sapply(qq, seqLen)[1, ],
+			max_len = sapply(qq, seqLen)[2, ],
+			n50 = sapply(1:length(qq), function(x) { get_nx(qq[[x]], 0.5)$nx } ),
+			q20_percent = sapply(1:length(qq), function(x) { get_q(qq[[x]], 21) } ),
+			q30_percent = sapply(1:length(qq), function(x) { get_q(qq[[x]], 31) } ),
 			row.names = NULL
 			)
 
@@ -109,9 +109,9 @@ sparkline(0) # load dependencies
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
 spark_gc <- function(qqobj, i) {
-	spk_chr(paste(names(gcContent(qqobj, i)), 
+	spk_chr(paste(names( gcContent(qqobj[[i]], 1) ), 
 								":", 
-								round(RcppRoll::roll_mean(gcContent(qqobj, i), n = 10)/qq@nReads[i], 3), sep = ""), 
+								round(RcppRoll::roll_mean(gcContent(qqobj[[i]], 1), n = 10)/qqobj[[i]]@nReads, 3), sep = ""), 
 					# GC content (%) is per Read counts, so to get dist divide by read count
 					spotColor = FALSE,
 					minSpotColor = FALSE,
@@ -123,7 +123,7 @@ spark_gc <- function(qqobj, i) {
 }
 
 spark_phred <- function(qqobj, i) {
-	spk_chr(paste(names(phredDist(qqobj, i)), ":", round(phredDist(qqobj, i), 3), sep = ""), 
+	spk_chr(paste( names(phredDist(qqobj[[i]]) ), ":", round( phredDist(qqobj[[i]]), 3 ), sep = ""), 
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
@@ -142,17 +142,17 @@ spk_tool <- function(labels, values) {
   )
 }
 spark_kmers <- function(qqobj, i) {
-	spk_chr(unname(qqobj@kmer[ , i]), width = 320, height = 40, type = "bar",
-					tooltipFormatter = spk_tool(names(qqobj@kmer[ , i]), qqobj@kmer[ , i])
+	spk_chr(unname(qqobj[[i]]@kmer), width = 320, height = 40, type = "bar",
+					tooltipFormatter = spk_tool( dimnames(qqobj[[i]]@kmer)[[1]], qqobj[[i]]@kmer )
 					)
 }
 
 gc_df <- data.frame(
-	file = basename(qq@filenames),
-	gc_content_dist = sapply(1:qq@nFiles, function(x) { spark_gc(qq, x) }),
-	q_score_dist = sapply(1:qq@nFiles, function(x) { spark_phred(qq, x) }),
+	file = basename(params$fqfiles),
+	gc_content_dist = sapply(1:length(qq), function(x) { spark_gc(qq, x) }),
+	q_score_dist = sapply(1:length(qq), function(x) { spark_phred(qq, x) }),
 	# h
-	k_mer_counts = sapply(1:qq@nFiles, function(x) { spark_kmers(qq, x) })
+	k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })
 )
 
 gc_df %>%
