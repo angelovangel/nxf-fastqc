@@ -61,11 +61,11 @@ get_nx <- function(qqobj, n) {
 
 # for parallelization of the fastqq call --> use mclapply + Reduce()
 # # mclapply will not work on windows!
-if(Sys.info()[['sysname']] == "Windows") {
+#if(Sys.info()[['sysname']] == "Windows") {
 	qq <- fastqq(params$fqfiles, k = 3)
-} else {
-	qq <- Reduce( mergeFastqq, mclapply(params$fqfiles, fastqq, k = 3) )
-}
+#} else {
+#	qq <- Reduce( mergeFastqq, mclapply(params$fqfiles, fastqq, k = 3) )
+#}
 
 # because fastqq does not error
 if(nFiles(qq) == 0) {
@@ -113,6 +113,10 @@ spark_gc <- function(qqobj, i) {
 								":", 
 								round(RcppRoll::roll_mean(gcContent(qqobj, i), n = 10)/qq@nReads[i], 3), sep = ""), 
 					# GC content (%) is per Read counts, so to get dist divide by read count
+					spotColor = FALSE,
+					minSpotColor = FALSE,
+					maxSpotColor = "red",
+					spotRadius = 3,
 					width = 180, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} : {{y}} {{suffix}}</span>"
 					)
@@ -120,6 +124,10 @@ spark_gc <- function(qqobj, i) {
 
 spark_phred <- function(qqobj, i) {
 	spk_chr(paste(names(phredDist(qqobj, i)), ":", round(phredDist(qqobj, i), 3), sep = ""), 
+					spotColor = FALSE,
+					minSpotColor = FALSE,
+					maxSpotColor = "red",
+					spotRadius = 3,
 					width = 180, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score {{x}} : {{y}} {{suffix}}</span>"
 					)
