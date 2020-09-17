@@ -14,3 +14,4 @@ dependencies:
   - r-rmarkdown=2.3
   - r-knitr=1.29
   - r-dplyr=1.0.2
+  - r-rcpp-roll=0.3.0

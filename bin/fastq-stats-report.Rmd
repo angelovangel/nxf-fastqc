@@ -23,6 +23,7 @@ require(kableExtra)
 require(dplyr)
 require(sparkline)
 require(parallel)
+require(RcppRoll)
 ```
 
 ```{r seqtools}
@@ -108,7 +109,9 @@ sparkline(0) # load dependencies
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
 spark_gc <- function(qqobj, i) {
-	spk_chr(paste(names(gcContent(qqobj, i)), ":", round(gcContent(qqobj, i)/qq@nReads[i], 3), sep = ""), 
+	spk_chr(paste(names(gcContent(qqobj, i)), 
+								":", 
+								round(RcppRoll::roll_mean(gcContent(qqobj, i), n = 10)/qq@nReads[i], 3), sep = ""), 
 					# GC content (%) is per Read counts, so to get dist divide by read count
 					width = 180, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} : {{y}} {{suffix}}</span>"
