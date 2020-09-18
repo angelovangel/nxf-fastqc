@@ -64,7 +64,8 @@ get_nx <- function(qqobj, n) {
 if(Sys.info()[['sysname']] == "Windows") {
 	qq <- lapply(params$fqfiles, fastqq, k = 3)
 } else {
-	qq <- mclapply(params$fqfiles, fastqq, k = 3)
+	cores <- parallel::detectCores()
+	qq <- mclapply(params$fqfiles, fastqq, k = 3, mc.cores = cores)
 }
 
 # because fastqq does not error
