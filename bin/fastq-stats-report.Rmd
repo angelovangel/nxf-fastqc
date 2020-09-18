@@ -9,7 +9,7 @@ params:
   fqfiles: NULL
 ---
 
-Report generated on `r Sys.time()` by the [angelovangel/nextflow-fastp pipeline](https://github.com/angelovangel/nextflow-fastp)
+Report generated on `r Sys.time()` by the [angelovangel/nextflow-fastp](https://github.com/angelovangel/nextflow-fastp) pipeline
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE, 

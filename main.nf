@@ -47,7 +47,7 @@ so no need for java classes
  */
 params.readsdir = "fastq"
 params.outdir = "${params.readsdir}/results-fastp"
-params.fqpattern = "*_R{1,2}_001.fastq.gz"
+params.fqpattern = "*.fastq.gz"
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
 params.title = "Summarized fastp report"
@@ -89,7 +89,7 @@ log.info """
          Usage:
         -------------------------------------------
          --readsdir         : directory with fastq files, default is "fastq"
-         --fqpattern        : regex pattern to match fastq files, default is "*_R{1,2}_001.fastq.gz"
+         --fqpattern        : regex pattern to match fastq files, default is "*.fastq.gz"
          --outdir           : where results will be saved, default is "results-fastp"
          --multiqc_config   : config file for MultiQC, default is "multiqc_config.yml"
          --title            : MultiQC report title, default is "Summarized fastp report"
