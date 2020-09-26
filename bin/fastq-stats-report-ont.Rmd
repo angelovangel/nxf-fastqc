@@ -18,6 +18,7 @@ knitr::opts_chunk$set(include = FALSE,
                       warning = FALSE, 
                       cache = FALSE)
 require(seqTools)
+require(Biostrings)
 require(writexl)
 require(knitr)
 require(kableExtra)
@@ -86,6 +87,14 @@ seqkit_qscore <- function(x) {
     density(from = 1, to = 25, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
   #
 }
+
+# k-mers are calculated using Biostrings, pretty fast (faster than kmer package)
+# returns a named chr vector, to use in spark bars
+get_trimers <- function(x) {
+	readDNAStringSet(x, format = 'fastq') %>%
+		trinucleotideFrequency(step = 10, simplify.as = 'collapsed', as.prob = TRUE)
+}
+
 #---------------------------------#
 # functions for making sparklines	#
 #---------------------------------#
@@ -117,31 +126,33 @@ spark_phred <- function(phred_density_obj) {
 					)
 }
 
-# spk_tool <- function(labels, values) {
-#   htmlwidgets::JS(
-#     sprintf(
-# 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-#     jsonlite::toJSON(paste0(labels, " : ",values))
-#     )
-#   )
-# }
-# spark_kmers <- function(qqobj, i) {
-# 	spk_chr(unname(qqobj[[i]]@kmer), width = 320, height = 40, type = "bar",
-# 					tooltipFormatter = spk_tool( dimnames(qqobj[[i]]@kmer)[[1]], qqobj[[i]]@kmer )
-# 					)
-# }
+spk_tool <- function(labels, values) {
+  htmlwidgets::JS(
+    sprintf(
+		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+    jsonlite::toJSON(paste0(labels, " : ",values))
+    )
+  )
+}
+spark_kmers <- function(chr) {
+	spk_chr(unname(chr), width = 320, height = 40, type = "bar",
+					tooltipFormatter = spk_tool( names(chr), chr )
+					)
+}
 gc_density <- 
 	mclapply(1:length(params$fqfiles), function(y) { seqkit_gc(params$fqfiles[y]) })
 
 q_score_density <- 
 	mclapply(1:length(params$fqfiles), function(y) { seqkit_qscore(params$fqfiles[y]) })
 
+k_mer_prob <- 
+	mclapply(1:length(params$fqfiles), function(y) {get_trimers(params$fqfiles[y]) } )
 
 gc_df <- data.frame(
 	file = basename(params$fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
-	q_score_dist = sapply(q_score_density, spark_phred)
-	#k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })
+	q_score_dist = sapply(q_score_density, spark_phred),
+	k_mer_dist = sapply(k_mer_prob, spark_kmers)
 )
 
 gc_df %>%

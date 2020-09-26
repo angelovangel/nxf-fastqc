@@ -46,8 +46,8 @@ so no need for java classes
  * pipeline input parameters 
  */
 params.readsdir = "fastq"
-params.outdir = "${params.readsdir}/results-fastp"
-params.fqpattern = "*.fastq.gz"
+params.outdir = "${workflow.launchDir}/results-fastp"
+params.fqpattern = "*R{1,2}*.fastq.gz"
 params.ontreads = false
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
@@ -70,6 +70,7 @@ log.info """
          --readsdir         : ${params.readsdir}
          --fqpattern        : ${params.fqpattern}
          --outdir           : ${params.outdir}
+         --ontreads         : ${params.ontreads}
          --multiqc_config   : ${params.multiqc_config}
          --title            : ${params.title}
 
@@ -92,7 +93,8 @@ log.info """
          --readsdir         : directory with fastq files, default is "fastq"
          --fqpattern        : regex pattern to match fastq files, default is "*.fastq.gz"
          --outdir           : where results will be saved, default is "results-fastp"
-         --multiqc_config   : config file for MultiQC, default is "multiqc_config.yml"
+         --ontreads         : use this parameter for Nanopore reads
+         --multiqc_config   : path to config file for MultiQC, default is "multiqc_config.yml"
          --title            : MultiQC report title, default is "Summarized fastp report"
         ===========================================
          """
@@ -221,6 +223,8 @@ process summary {
 //=========================
 process multiqc {
     publishDir params.outdir, mode: 'copy'
+    when:
+        !params.ontreads // multiqc fails on fastp json from ont files! too big
        
     input:
         file x from fastp_ch.collect()
@@ -261,12 +265,11 @@ process multiqc {
 
 //=============================
 Channel.fromPath("${baseDir}/bin/fastq-stats-report.Rmd").set{ fastq_stats_report_ch }
+Channel.fromPath("${baseDir}/bin/fastq-stats-report-ont.Rmd").set{ fastq_stats_report_ont_ch }
 
-process fastq_stats_ilmn {
+if (!params.ontreads) {
+    process fastq_stats_ilmn {
     publishDir params.outdir, mode: 'copy'
-    
-    when:
-        !params.ontreads
 
     input:
         file x from reads_ch.collect()
@@ -281,9 +284,26 @@ process fastq_stats_ilmn {
     """
     seqtools.R $x
     """
-}
+    }
+} else {
+    process fastq_stats_ont {
+    publishDir params.outdir, mode: 'copy'
 
+    input:
+        file x from reads_ch.collect()
+        file 'fastq-stats-report-ont.Rmd' from fastq_stats_report_ont_ch
 
+    output:
+        file 'fastq-stats-report-ont.html'
+        file "fastq-stats.csv"
+        file "fastq-stats.xlsx"
+    
+    script:
+    """
+    seqtools-ont.R $x
+    """
+    }
+}   
 //=============================
 workflow.onComplete {
     if (workflow.success) {
@@ -294,8 +314,7 @@ workflow.onComplete {
             See the report here ==> ${ANSI_RESET}$params.outdir/multiqc_report.html
             """
             .stripIndent()
-    }
-    else {
+    } else {
         log.info """
             ===========================================
             ${ANSI_RED}Finished with errors!${ANSI_RESET}
