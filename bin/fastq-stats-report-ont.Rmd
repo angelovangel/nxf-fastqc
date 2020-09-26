@@ -1,0 +1,153 @@
+---
+title: "FASTQ quality control metrics (Nanopore reads)"
+output:
+  html_document:
+    highlight: tango
+    theme: cosmo
+    toc: no
+params:
+  fqfiles: NULL
+---
+
+Report generated on `r Sys.time()` by the [angelovangel/nextflow-fastp](https://github.com/angelovangel/nextflow-fastp) pipeline
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE, 
+											cache = FALSE,
+                      echo = FALSE, 
+                      warning = FALSE, 
+                      cache = FALSE)
+require(seqTools)
+require(writexl)
+require(knitr)
+require(kableExtra)
+require(dplyr)
+require(sparkline)
+require(parallel)
+require(RcppRoll)
+```
+
+```{r seqkit}
+# seqkit is used for ONT data, buffer overflow with seqTools::fastqq
+# args are individual fastq.gz files
+
+
+#=======================================================================
+# start by executing seqkit stats -a on the input fqfiles, which are supplied as params by the calling script
+
+# for parallelization ? parallel in bash
+stats_headers <- c("file", "format",  "type",  "num_seqs", "sum_len", "min_len", "avg_len", "max_len", "Q1", "Q2", "Q3",  "sum_gap", "N50", "Q20_percent", "Q30_percent")
+
+stats <- system2(command = "parallel", 
+								 args = c("seqkit", "stats", "-ab", ":::", params$fqfiles), stdout = TRUE)
+df <- stats[grep("^file", stats, invert = TRUE)] %>% 
+	gsub(",", "", .) %>%
+	read.table(text = ., col.names = stats_headers) %>% 
+	dplyr::select(-c(2,3, 9:12))
+
+# these files are published by the nxf script
+write.csv(df, file = "fastq-stats.csv", row.names = FALSE)
+write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
+
+```
+
+***
+
+### Number of reads and read quality metrics (Nanopore reads)
+
+```{r table1, include=TRUE}
+df %>%
+	kableExtra::kbl() %>%
+	kable_styling(fixed_thead = TRUE, bootstrap_options = c("hover", "responsive"))
+```
+
+***
+
+### GC-content, Phred-score and k-mer (n=3) distributions (Nanopore reads)
+```{r table2, include=TRUE}
+#---------------------------------#
+# functions to get gc, qscore ... distributions with seqkit
+#---------------------------------#
+
+seqkit_gc <- function(x) {
+  system2("seqkit", args = c("fx2tab", "-g", x, "| cut -f 4"), stdout = TRUE) %>%
+    as.numeric() %>%
+    # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 100
+    density(from = 1, to = 100, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
+    #hist(plot = FALSE, breaks = c(0:100))
+}
+
+# len density makes no sense here - different lengths...
+
+seqkit_qscore <- function(x) {
+  system2("seqkit", args = c("fx2tab", "-q", x, "| cut -f 4"), stdout = TRUE) %>%
+    as.numeric() %>%
+    # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 50
+    density(from = 1, to = 25, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
+  #
+}
+#---------------------------------#
+# functions for making sparklines	#
+#---------------------------------#
+
+sparkline(0) # load dependencies
+
+# see https://omnipotent.net/jquery.sparkline/#s-docs
+# on how to include both x and y values in spark
+# basically, supply values separated by a colon: x:y,x:y,x:y
+spark_gc <- function(gc_density_obj) {
+	spk_chr(paste( gc_density_obj$x, ":", gc_density_obj$y, sep = "" ), 
+					spotColor = FALSE,
+					minSpotColor = FALSE,
+					maxSpotColor = "red",
+					spotRadius = 3,
+					width = 180, height = 40,
+					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
+					)
+}
+
+spark_phred <- function(phred_density_obj) {
+	spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
+					spotColor = FALSE,
+					minSpotColor = FALSE,
+					maxSpotColor = "red",
+					spotRadius = 3,
+					width = 180, height = 40,
+					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
+					)
+}
+
+# spk_tool <- function(labels, values) {
+#   htmlwidgets::JS(
+#     sprintf(
+# 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+#     jsonlite::toJSON(paste0(labels, " : ",values))
+#     )
+#   )
+# }
+# spark_kmers <- function(qqobj, i) {
+# 	spk_chr(unname(qqobj[[i]]@kmer), width = 320, height = 40, type = "bar",
+# 					tooltipFormatter = spk_tool( dimnames(qqobj[[i]]@kmer)[[1]], qqobj[[i]]@kmer )
+# 					)
+# }
+gc_density <- 
+	mclapply(1:length(params$fqfiles), function(y) { seqkit_gc(params$fqfiles[y]) })
+
+q_score_density <- 
+	mclapply(1:length(params$fqfiles), function(y) { seqkit_qscore(params$fqfiles[y]) })
+
+
+gc_df <- data.frame(
+	file = basename(params$fqfiles),
+	gc_content_dist = sapply(gc_density, spark_gc),
+	q_score_dist = sapply(q_score_density, spark_phred)
+	#k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })
+)
+
+gc_df %>%
+	kableExtra::kbl(escape = F) %>%
+	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
+
+```
+
+

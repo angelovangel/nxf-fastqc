@@ -9,10 +9,11 @@ require(rmarkdown)
 
 args <- commandArgs(trailingOnly = T)
 
+cat(str(args))
 # render the rmarkdown, using fastq-report.Rmd as template
 # cat(getwd(), "currentdir.txt")
-rmarkdown::render(input = "fastq-stats-report.Rmd", 
-									output_file = "fastq-stats-report.html", 
+rmarkdown::render(input = "fastq-stats-report-ont.Rmd", 
+									output_file = "fastq-stats-report-ont.html", 
 									output_dir = getwd(), # important when knitting in docker 
 									knit_root_dir = getwd(), # important when knitting in docker 
 									params = list(fqfiles = args)

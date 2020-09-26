@@ -5,5 +5,5 @@ LABEL description="Docker image containing all requirements for the nextflow-fas
 COPY environment.yml .
 RUN conda env update -n root -f environment.yml && conda clean -a
 RUN apt-get update && apt-get install -y ksh procps libxt-dev
-# libxt-dev is required to solve the seqfault error caused by cairoVersion() in R
+# libxt-dev is required to solve the segfault error caused by cairoVersion() in R
 RUN R -e "install.packages('sparkline', repos='http://cran.rstudio.com/')"

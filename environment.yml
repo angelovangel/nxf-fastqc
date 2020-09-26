@@ -4,6 +4,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  - parallel
   - fastp=0.19.6
   - multiqc=1.7
   - jq=1.6

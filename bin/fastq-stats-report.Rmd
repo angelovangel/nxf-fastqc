@@ -65,7 +65,10 @@ if(Sys.info()[['sysname']] == "Windows") {
 	qq <- lapply(params$fqfiles, fastqq, k = 3)
 } else {
 	cores <- parallel::detectCores()
-	qq <- mclapply(params$fqfiles, fastqq, k = 3, mc.cores = cores)
+	qq <- mclapply(params$fqfiles, fastqq, 
+								 k = 3, 
+								 mc.cores = cores, 
+								 mc.preschedule = FALSE) #works better on the workstation
 }
 
 # because fastqq does not error

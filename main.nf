@@ -48,6 +48,7 @@ so no need for java classes
 params.readsdir = "fastq"
 params.outdir = "${params.readsdir}/results-fastp"
 params.fqpattern = "*.fastq.gz"
+params.ontreads = false
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
 params.title = "Summarized fastp report"
@@ -155,11 +156,14 @@ process fastp {
 
     script:
     def single = x instanceof Path // this is from Paolo: https://groups.google.com/forum/#!topic/nextflow/_ygESaTlCXg
+    def qscore_cutoff = params.ontreads ? 7 : 15 //here ontreads matters
     if ( !single ) {
         seqmode = "PE"
         """
         mkdir fastp_trimmed
-        fastp -i ${x[0]} -I ${x[1]} \
+        fastp \
+        -q $qscore_cutoff \
+        -i ${x[0]} -I ${x[1]} \
         -o fastp_trimmed/trim_${x[0]} -O fastp_trimmed/trim_${x[1]} \
         -j ${sample_id}_fastp.json
         """
@@ -168,7 +172,9 @@ process fastp {
         seqmode = "SE"
         """
         mkdir fastp_trimmed
-        fastp -i ${x} -o fastp_trimmed/trim_${x} \
+        fastp \
+        -q $qscore_cutoff \
+        -i ${x} -o fastp_trimmed/trim_${x} \
         -j ${sample_id}_fastp.json
         """
     }
@@ -256,8 +262,11 @@ process multiqc {
 //=============================
 Channel.fromPath("${baseDir}/bin/fastq-stats-report.Rmd").set{ fastq_stats_report_ch }
 
-process seqtools {
+process fastq_stats_ilmn {
     publishDir params.outdir, mode: 'copy'
+    
+    when:
+        !params.ontreads
 
     input:
         file x from reads_ch.collect()
@@ -273,6 +282,7 @@ process seqtools {
     seqtools.R $x
     """
 }
+
 
 //=============================
 workflow.onComplete {
