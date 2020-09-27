@@ -1,6 +1,6 @@
 FROM continuumio/miniconda3:4.8.2
 LABEL author="Angel Angelov <aangeloo@gmail.com>"
-LABEL description="Docker image containing all requirements for the nextflow-fastp pipeline"
+LABEL description="Docker image containing all requirements for the nxf-fastqc pipeline"
 
 COPY environment.yml .
 RUN conda env update -n root -f environment.yml && conda clean -afy && pip install git+https://github.com/ewels/MultiQC.git

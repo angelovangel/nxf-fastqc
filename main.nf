@@ -1,4 +1,4 @@
-// FASTP-MULTIQC pipeline
+// FASTQC pipeline
 
 /*
 NXF ver 19.08+ needed because of the use of tuple instead of set
@@ -46,12 +46,12 @@ so no need for java classes
  * pipeline input parameters 
  */
 params.readsdir = "fastq"
-params.outdir = "${workflow.launchDir}/results-fastp"
+params.outdir = "${workflow.launchDir}/results-fastqc"
 params.fqpattern = "*R{1,2}*.fastq.gz"
 params.ontreads = false
 //params.threads = 2 //makes no sense I think, to be removed
 params.multiqc_config = "$baseDir/multiqc_config.yml" //custom config mainly for sample names
-params.title = "Summarized fastp report"
+params.title = "Summarized nxf-fastqc report"
 params.help = ""
 
 mqc_config = file(params.multiqc_config) // this is needed, otherwise the multiqc config file is not available in the docker image
@@ -63,7 +63,7 @@ if (params.help) {
 
 log.info """
         ===========================================
-         F A S T P - M U L T I Q C   P I P E L I N E    
+         F A S T Q C  P I P E L I N E    
 
          Used parameters:
         -------------------------------------------
@@ -86,7 +86,7 @@ log.info """
 def helpMessage() {
 log.info """
         ===========================================
-         F A S T P - M U L T I Q C   P I P E L I N E
+         F A S T Q C   P I P E L I N E
   
          Usage:
         -------------------------------------------
