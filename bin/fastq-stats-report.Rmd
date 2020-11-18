@@ -62,10 +62,10 @@ get_nx <- function(qqobj, n) {
 # for parallelization of the fastqq call --> use mclapply
 # # mclapply will not work on windows!
 if(Sys.info()[['sysname']] == "Windows") {
-	qq <- lapply(params$fqfiles, fastqq, k = 3)
+	qq <- lapply(params$fqfiles, seqTools::fastqq, k = 3)
 } else {
 	cores <- parallel::detectCores()
-	qq <- mclapply(params$fqfiles, fastqq, 
+	qq <- mclapply(params$fqfiles, seqTools::fastqq, 
 								 k = 3, 
 								 mc.cores = cores, 
 								 mc.preschedule = FALSE) #works better on the workstation
