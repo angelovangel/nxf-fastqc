@@ -6,4 +6,10 @@ COPY environment.yml .
 RUN conda env update -n root -f environment.yml && conda clean -afy && pip install git+https://github.com/ewels/MultiQC.git
 RUN apt-get update && apt-get install -y ksh procps libxt-dev
 # libxt-dev is required to solve the segfault error caused by cairoVersion() in R
+
+# setup faster for linux
+RUN wget -P bin https://github.com/angelovangel/faster/releases/download/v0.1.3/x86_64_linux_faster && \
+mv bin/x86_64_linux_faster bin/faster && \
+chmod 755 bin/faster
+
 RUN R -e "install.packages('sparkline', repos='http://cran.rstudio.com/')"
