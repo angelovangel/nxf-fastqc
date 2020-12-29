@@ -9,7 +9,7 @@ params:
   fqfiles: NULL
 ---
 
-Report generated on `r Sys.time()` by the [angelovangel/nextflow-fastp](https://github.com/angelovangel/nextflow-fastp) pipeline
+Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE, 
@@ -17,34 +17,37 @@ knitr::opts_chunk$set(include = FALSE,
                       echo = FALSE, 
                       warning = FALSE, 
                       cache = FALSE)
-require(seqTools)
-require(Biostrings)
 require(writexl)
 require(knitr)
 require(kableExtra)
+require(DT)
 require(dplyr)
 require(sparkline)
+require(htmlwidgets)
 require(parallel)
-require(RcppRoll)
+
 ```
 
-```{r seqkit}
-# seqkit is used for ONT data, buffer overflow with seqTools::fastqq
+```{r faster}
+# faster is used for ONT data, buffer overflow with seqTools::fastqq
 # args are individual fastq.gz files
 
 
 #=======================================================================
-# start by executing seqkit stats -a on the input fqfiles, which are supplied as params by the calling script
+# start by executing faster on the input fqfiles, which are supplied as params by the calling script
 
 # for parallelization ? parallel in bash
-stats_headers <- c("file", "format",  "type",  "num_seqs", "sum_len", "min_len", "avg_len", "max_len", "Q1", "Q2", "Q3",  "sum_gap", "N50", "Q20_percent", "Q30_percent")
+stats_headers <- c("file", "num_seqs", "bases", "n_bases", 
+									 "min_len", "max_len", "avg_len", "Q1", "Q2", "Q3", 
+									 "N50", "Q20_percent", "Q30_percent")
 
 stats <- system2(command = "parallel", 
-								 args = c("seqkit", "stats", "-ab", ":::", params$fqfiles), stdout = TRUE)
+								 args = c("-k", "faster", "-t", ":::", params$fqfiles), stdout = TRUE)
+
 df <- stats[grep("^file", stats, invert = TRUE)] %>% 
-	gsub(",", "", .) %>%
 	read.table(text = ., col.names = stats_headers) %>% 
-	dplyr::select(-c(2,3, 9:12))
+	dplyr::mutate(file = basename(file)) %>% 
+	dplyr::select(-c(4, 8:10))
 
 # these files are published by the nxf script
 write.csv(df, file = "fastq-stats.csv", row.names = FALSE)
@@ -57,42 +60,51 @@ write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
 ### Number of reads and read quality metrics (Nanopore reads)
 
 ```{r table1, include=TRUE}
-df %>%
-	kableExtra::kbl() %>%
-	kable_styling(fixed_thead = TRUE, bootstrap_options = c("hover", "responsive"))
+
+DT::datatable(df, 
+							filter = 'top', 
+							caption = "fastq files summary generated with angelovangel/faster",
+					#extensions = 'Buttons', 
+					options = list(dom = 'Btp'
+												 #buttons = c('copy', 'csv', 'excel')
+												 ), 
+					rownames = FALSE, 
+					class = 'hover row-border') %>%
+	formatRound(2:7, 0) %>%
+	formatRound(8:9, 2)
 ```
 
 ***
 
-### GC-content, Phred-score and k-mer (n=3) distributions (Nanopore reads)
+### GC-content, Phred-score and length distributions(100 to 100k, log scale) - Nanopore reads
 ```{r table2, include=TRUE}
 #---------------------------------#
-# functions to get gc, qscore ... distributions with seqkit
+# functions to get gc, qscore ... distributions with faster
 #---------------------------------#
 
-seqkit_gc <- function(x) {
-  system2("seqkit", args = c("fx2tab", "-g", x, "| cut -f 4"), stdout = TRUE) %>%
+faster_gc <- function(x) {
+  system2("faster", args = c("--gc", x), stdout = TRUE) %>%
     as.numeric() %>%
     # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 100
-    density(from = 1, to = 100, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
+    density(from = 0, to = 1, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
     #hist(plot = FALSE, breaks = c(0:100))
 }
 
-# len density makes no sense here - different lengths...
 
-seqkit_qscore <- function(x) {
-  system2("seqkit", args = c("fx2tab", "-q", x, "| cut -f 4"), stdout = TRUE) %>%
+faster_qscore <- function(x) {
+  system2("faster", args = c("--qscore", x), stdout = TRUE) %>%
     as.numeric() %>%
     # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 50
     density(from = 1, to = 25, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
   #
 }
 
-# k-mers are calculated using Biostrings, pretty fast (faster than kmer package)
-# returns a named chr vector, to use in spark bars
-get_trimers <- function(x) {
-	readDNAStringSet(x, format = 'fastq') %>%
-		trinucleotideFrequency(step = 10, simplify.as = 'collapsed', as.prob = TRUE)
+# in order to be able to compare across vastly different lengths, use special scale
+faster_len <- function(x) {
+	system2("faster", args = c("--len", x), stdout = TRUE) %>%
+		as.numeric() %>%
+		log10() %>%
+		density(from = 2, to = 5, n = 100, na.rm = TRUE)
 }
 
 #---------------------------------#
@@ -105,7 +117,7 @@ sparkline(0) # load dependencies
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
 spark_gc <- function(gc_density_obj) {
-	spk_chr(paste( gc_density_obj$x, ":", gc_density_obj$y, sep = "" ), 
+	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
@@ -125,34 +137,51 @@ spark_phred <- function(phred_density_obj) {
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
 					)
 }
-
-spk_tool <- function(labels, values) {
-  htmlwidgets::JS(
-    sprintf(
-		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-    jsonlite::toJSON(paste0(labels, " : ",values))
-    )
-  )
-}
-spark_kmers <- function(chr) {
-	spk_chr(unname(chr), width = 320, height = 40, type = "bar",
-					tooltipFormatter = spk_tool( names(chr), chr )
+# format the tooltip numbers back to their values
+log_formatter <- htmlwidgets::JS(sprintf("function(x){ return Math.round(Math.pow(10, x)); }"))
+	
+# in order to be able to compare across vastly different lengths, use special scale
+spark_len <- function(len_density_obj) {
+	spk_chr(paste( len_density_obj$x, ":", len_density_obj$y, sep = ""), 
+					#type = "bar",
+					spotColor = FALSE,
+					minSpotColor = FALSE,
+					maxSpotColor = "red",
+					spotRadius = 3,
+					width = 280, height = 40,
+					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}length: {{x}} {{suffix}}</span>",
+					numberFormatter = log_formatter
 					)
 }
+
+# spk_tool <- function(labels, values) {
+#   htmlwidgets::JS(
+#     sprintf(
+# 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+#     jsonlite::toJSON(paste0(labels, " : ",values))
+#     )
+#   )
+# }
+# spark_kmers <- function(chr) {
+# 	spk_chr(unname(chr), width = 320, height = 40, type = "bar",
+# 					tooltipFormatter = spk_tool( names(chr), chr )
+# 					)
+# }
+
 gc_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { seqkit_gc(params$fqfiles[y]) })
+	mclapply(1:length(params$fqfiles), function(y) { faster_gc(params$fqfiles[y]) })
 
 q_score_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { seqkit_qscore(params$fqfiles[y]) })
+	mclapply(1:length(params$fqfiles), function(y) { faster_qscore(params$fqfiles[y]) })
 
-k_mer_prob <- 
-	mclapply(1:length(params$fqfiles), function(y) {get_trimers(params$fqfiles[y]) } )
+len_density <- 
+	mclapply(1:length(params$fqfiles), function(y) { faster_len(params$fqfiles[y]) })
 
 gc_df <- data.frame(
 	file = basename(params$fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
 	q_score_dist = sapply(q_score_density, spark_phred),
-	k_mer_dist = sapply(k_mer_prob, spark_kmers)
+	len_dist = sapply(len_density, spark_len)
 )
 
 gc_df %>%
