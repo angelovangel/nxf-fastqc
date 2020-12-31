@@ -42,11 +42,14 @@ stats_headers <- c("file", "num_seqs", "bases", "n_bases",
 									 "N50", "Q20_percent", "Q30_percent")
 
 stats <- system2(command = "parallel", 
-								 args = c("-k", "faster", "-t", ":::", params$fqfiles), stdout = TRUE)
+								 args = c("-k", "--will-cite", "faster", "-t", ":::", params$fqfiles), 
+								 stdout = TRUE)
+
 
 df <- stats[grep("^file", stats, invert = TRUE)] %>% 
 	read.table(text = ., col.names = stats_headers) %>% 
 	dplyr::mutate(file = basename(file)) %>% 
+	dplyr::arrange(file) %>%
 	dplyr::select(-c(4, 8:10))
 
 # these files are published by the nxf script
@@ -70,8 +73,8 @@ DT::datatable(df,
 												 ), 
 					rownames = FALSE, 
 					class = 'hover row-border') %>%
-	formatRound(2:7, 0) %>%
-	formatRound(8:9, 2)
+	DT::formatRound(2:7, 0) %>%
+	DT::formatRound(8:9, 2)
 ```
 
 ***
@@ -185,6 +188,7 @@ gc_df <- data.frame(
 )
 
 gc_df %>%
+	dplyr::arrange(file) %>%
 	kableExtra::kbl(escape = F) %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 
