@@ -1,5 +1,5 @@
 ---
-title: "FASTQ quality control metrics"
+title: "Illumina fastq quality control metrics"
 output:
   html_document:
     highlight: tango
@@ -9,7 +9,7 @@ params:
   fqfiles: NULL
 ---
 
-Report generated on `r Sys.time()` by the [angelovangel/nextflow-fastp](https://github.com/angelovangel/nextflow-fastp) pipeline
+Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE, 
@@ -19,6 +19,7 @@ knitr::opts_chunk$set(include = FALSE,
 require(seqTools)
 require(writexl)
 require(knitr)
+require(DT)
 require(kableExtra)
 require(dplyr)
 require(sparkline)
@@ -26,7 +27,23 @@ require(parallel)
 require(RcppRoll)
 ```
 
-```{r seqtools}
+```{r faster}
+
+stats_headers <- c("file", "num_seqs", "bases", "n_bases", 
+									 "min_len", "max_len", "avg_len", "Q1", "Q2", "Q3", 
+									 "N50", "Q20_percent", "Q30_percent")
+
+stats <- system2(command = "parallel", 
+								 args = c("-k", "--will-cite", "faster", "-t", ":::", params$fqfiles), 
+								 stdout = TRUE)
+
+
+df <- stats[grep("^file", stats, invert = TRUE)] %>% 
+	read.table(text = ., col.names = stats_headers) %>% 
+	dplyr::mutate(file = basename(file)) %>% 
+	dplyr::arrange(file) %>%
+	dplyr::select(-c(8:11))
+
 # the seqtools script lives here
 # args are individual fastq.gz files
 
@@ -35,58 +52,58 @@ require(RcppRoll)
 # aux function needed for calc Q20% and Q30%
 # phredDist from seqTools returns the phred score distribution, 
 # so to get Q20% use get_q(qq, 21) because the vector is zero-based
-get_q <- function(qqobj, q) {
-	round( sum( phredDist(qqobj)[q:length(phredDist(qqobj))] ) * 100, digits = 2)
-}
+# get_q <- function(qqobj, q) {
+# 	round( sum( phredDist(qqobj)[q:length(phredDist(qqobj))] ) * 100, digits = 2)
+# }
 
 # aux function to get N50 or Nx from the qq object
 # n is 0.5 for N50 etc...
-get_nx <- function(qqobj, n) {
-	slc <- seqLenCount(qqobj)
-	
-	# get a vector with read lengths from seq len counts
-	v <- rep.int(1:length(slc), times = c(slc))
-	
-	# and the nice algo for N50
-	v.sorted <- rev(sort(v))
-	return(list(
-		sum_len = sum(v),
-		nx = v.sorted[cumsum(as.numeric(v.sorted)) >= sum(as.numeric(v.sorted)) * n][1]
-	))
-	
-}
+# get_nx <- function(qqobj, n) {
+# 	slc <- seqLenCount(qqobj)
+# 	
+# 	# get a vector with read lengths from seq len counts
+# 	v <- rep.int(1:length(slc), times = c(slc))
+# 	
+# 	# and the nice algo for N50
+# 	v.sorted <- rev(sort(v))
+# 	return(list(
+# 		sum_len = sum(v),
+# 		nx = v.sorted[cumsum(as.numeric(v.sorted)) >= sum(as.numeric(v.sorted)) * n][1]
+# 	))
+# 	
+# }
 
 #=======================================================================
 # start by executing fastqq on the input fqfiles, which are supplied as params by the calling script
 
 # for parallelization of the fastqq call --> use mclapply
 # # mclapply will not work on windows!
-if(Sys.info()[['sysname']] == "Windows") {
-	qq <- lapply(params$fqfiles, seqTools::fastqq, k = 3)
-} else {
-	cores <- parallel::detectCores()
-	qq <- mclapply(params$fqfiles, seqTools::fastqq, 
-								 k = 3, 
-								 mc.cores = cores, 
-								 mc.preschedule = FALSE) #works better on the workstation
-}
+# if(Sys.info()[['sysname']] == "Windows") {
+# 	qq <- lapply(params$fqfiles, seqTools::fastqq, k = 3)
+# } else {
+# 	cores <- parallel::detectCores()
+# 	qq <- mclapply(params$fqfiles, seqTools::fastqq, 
+# 								 k = 3, 
+# 								 mc.cores = cores, 
+# 								 mc.preschedule = FALSE) #works better on the workstation
+# }
 
-# because fastqq does not error
-if(length(qq) == 0) {
-	stop("No valid fastq file found")
-}
-
-df <-	data.frame(
-			file = basename(params$fqfiles),
-			num_seqs = sapply(qq, seqTools::nReads),
-			sum_len = sapply(1:length(qq), function(x) { get_nx(qq[[x]], 0.5)$sum_len } ), # total nucleotides
-			min_len = sapply(qq, seqLen)[1, ],
-			max_len = sapply(qq, seqLen)[2, ],
-			n50 = sapply(1:length(qq), function(x) { get_nx(qq[[x]], 0.5)$nx } ),
-			q20_percent = sapply(1:length(qq), function(x) { get_q(qq[[x]], 21) } ),
-			q30_percent = sapply(1:length(qq), function(x) { get_q(qq[[x]], 31) } ),
-			row.names = NULL
-			)
+# # because fastqq does not error
+# if(length(qq) == 0) {
+# 	stop("No valid fastq file found")
+# }
+# 
+# df <-	data.frame(
+# 			file = basename(params$fqfiles),
+# 			num_seqs = sapply(qq, seqTools::nReads),
+# 			sum_len = sapply(1:length(qq), function(x) { get_nx(qq[[x]], 0.5)$sum_len } ), # total nucleotides
+# 			min_len = sapply(qq, seqLen)[1, ],
+# 			max_len = sapply(qq, seqLen)[2, ],
+# 			n50 = sapply(1:length(qq), function(x) { get_nx(qq[[x]], 0.5)$nx } ),
+# 			q20_percent = sapply(1:length(qq), function(x) { get_q(qq[[x]], 21) } ),
+# 			q30_percent = sapply(1:length(qq), function(x) { get_q(qq[[x]], 31) } ),
+# 			row.names = NULL
+# 			)
 
 # these files are published by the nxf script
 write.csv(df, file = "fastq-stats.csv", row.names = FALSE)
@@ -99,67 +116,131 @@ write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
 ### Number of reads and read quality metrics
 
 ```{r table1, include=TRUE}
-df %>%
-	kableExtra::kbl(caption = "General fastq files statistics") %>%
-	kable_styling(fixed_thead = TRUE, bootstrap_options = c("hover", "responsive"))
+DT::datatable(df, 
+							filter = 'top', 
+							caption = "Illumina fastq files summary generated with angelovangel/faster",
+					#extensions = 'Buttons', 
+					options = list(dom = 'Btp'
+												 #buttons = c('copy', 'csv', 'excel')
+												 ), 
+					rownames = FALSE, 
+					class = 'hover row-border') %>%
+	DT::formatRound(2:7, 0) %>%
+	DT::formatRound(8:9, 2)
+
 ```
 
 ***
 
-### GC-content, Phred-score and k-mer (k = 3) distributions
+### GC-content and Phred-score distributions
 ```{r table2, include=TRUE}
 sparkline(0) # load dependencies
 # see https://omnipotent.net/jquery.sparkline/#s-docs
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
-spark_gc <- function(qqobj, i) {
-	spk_chr(paste(names( gcContent(qqobj[[i]], 1) ), 
-								":", 
-								round(RcppRoll::roll_mean(gcContent(qqobj[[i]], 1), n = 10)/qqobj[[i]]@nReads, 3), sep = ""), 
-					# GC content (%) is per Read counts, so to get dist divide by read count
+
+faster_gc <- function(x) {
+  system2("faster", args = c("--gc", x), stdout = TRUE) %>%
+    as.numeric() %>%
+    # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 100
+    density(from = 0, to = 1, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
+    #hist(plot = FALSE, breaks = c(0:100))
+}
+
+faster_qscore <- function(x) {
+  system2("faster", args = c("--qscore", x), stdout = TRUE) %>%
+    as.numeric() %>%
+    # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 50
+    density(from = 1, to = 60, n = 60, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
+  #
+}
+
+#---------------------------------#
+# functions for making sparklines	#
+#---------------------------------#
+
+sparkline(0) # load dependencies
+
+# see https://omnipotent.net/jquery.sparkline/#s-docs
+# on how to include both x and y values in spark
+# basically, supply values separated by a colon: x:y,x:y,x:y
+spark_gc <- function(gc_density_obj) {
+	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
 					width = 180, height = 40,
-					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} : {{y}} {{suffix}}</span>"
+					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
 }
 
-spark_phred <- function(qqobj, i) {
-	spk_chr(paste( names(phredDist(qqobj[[i]]) ), ":", round( phredDist(qqobj[[i]]), 3 ), sep = ""), 
+spark_phred <- function(phred_density_obj) {
+	spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
 					width = 180, height = 40,
-					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score {{x}} : {{y}} {{suffix}}</span>"
+					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
 					)
 }
+# spark_gc <- function(qqobj, i) {
+# 	spk_chr(paste(names( gcContent(qqobj[[i]], 1) ), 
+# 								":", 
+# 								round(RcppRoll::roll_mean(gcContent(qqobj[[i]], 1), n = 10)/qqobj[[i]]@nReads, 3), sep = ""), 
+# 					# GC content (%) is per Read counts, so to get dist divide by read count
+# 					spotColor = FALSE,
+# 					minSpotColor = FALSE,
+# 					maxSpotColor = "red",
+# 					spotRadius = 3,
+# 					width = 180, height = 40,
+# 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} : {{y}} {{suffix}}</span>"
+# 					)
+# }
+# 
+# spark_phred <- function(qqobj, i) {
+# 	spk_chr(paste( names(phredDist(qqobj[[i]]) ), ":", round( phredDist(qqobj[[i]]), 3 ), sep = ""), 
+# 					spotColor = FALSE,
+# 					minSpotColor = FALSE,
+# 					maxSpotColor = "red",
+# 					spotRadius = 3,
+# 					width = 180, height = 40,
+# 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score {{x}} : {{y}} {{suffix}}</span>"
+# 					)
+# }
+# 
+# spk_tool <- function(labels, values) {
+#   htmlwidgets::JS(
+#     sprintf(
+# 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+#     jsonlite::toJSON(paste0(labels, " : ",values))
+#     )
+#   )
+# }
+# spark_kmers <- function(qqobj, i) {
+# 	spk_chr(unname(qqobj[[i]]@kmer), width = 320, height = 40, type = "bar",
+# 					tooltipFormatter = spk_tool( dimnames(qqobj[[i]]@kmer)[[1]], qqobj[[i]]@kmer )
+# 					)
+# }
 
-spk_tool <- function(labels, values) {
-  htmlwidgets::JS(
-    sprintf(
-		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-    jsonlite::toJSON(paste0(labels, " : ",values))
-    )
-  )
-}
-spark_kmers <- function(qqobj, i) {
-	spk_chr(unname(qqobj[[i]]@kmer), width = 320, height = 40, type = "bar",
-					tooltipFormatter = spk_tool( dimnames(qqobj[[i]]@kmer)[[1]], qqobj[[i]]@kmer )
-					)
-}
+gc_density <- 
+	mclapply(1:length(params$fqfiles), function(y) { faster_gc(params$fqfiles[y]) })
+
+q_score_density <- 
+	mclapply(1:length(params$fqfiles), function(y) { faster_qscore(params$fqfiles[y]) })
 
 gc_df <- data.frame(
 	file = basename(params$fqfiles),
-	gc_content_dist = sapply(1:length(qq), function(x) { spark_gc(qq, x) }),
-	q_score_dist = sapply(1:length(qq), function(x) { spark_phred(qq, x) }),
-	# h
-	k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })
+	gc_content_dist = sapply(gc_density, spark_gc),
+	q_score_dist = sapply(q_score_density, spark_phred)
+	#gc_content_dist = sapply(1:length(qq), function(x) { spark_gc(qq, x) }),
+	#q_score_dist = sapply(1:length(qq), function(x) { spark_phred(qq, x) }),
+	#k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })
 )
 
 gc_df %>%
+	dplyr::arrange(file) %>%
 	kableExtra::kbl(escape = F) %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 

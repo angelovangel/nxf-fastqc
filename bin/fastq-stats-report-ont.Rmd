@@ -1,5 +1,5 @@
 ---
-title: "FASTQ quality control metrics (Nanopore reads)"
+title: "ONT fastq quality control metrics (Nanopore reads)"
 output:
   html_document:
     highlight: tango
@@ -66,7 +66,7 @@ write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
 
 DT::datatable(df, 
 							filter = 'top', 
-							caption = "fastq files summary generated with angelovangel/faster",
+							caption = "ONT fastq files summary generated with angelovangel/faster",
 					#extensions = 'Buttons', 
 					options = list(dom = 'Btp'
 												 #buttons = c('copy', 'csv', 'excel')
@@ -79,7 +79,7 @@ DT::datatable(df,
 
 ***
 
-### GC-content, Phred-score and length distributions(100 to 100k, log scale) - Nanopore reads
+### GC-content, Phred-score and length distributions (100 to 100k, log scale) - Nanopore reads
 ```{r table2, include=TRUE}
 #---------------------------------#
 # functions to get gc, qscore ... distributions with faster
