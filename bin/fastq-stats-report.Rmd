@@ -9,7 +9,7 @@ params:
   fqfiles: NULL
 ---
 
-Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline
+Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline. All fastq data is calculated with the [faster](https://github.com/angelovangel/faster) program.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE, 
@@ -23,6 +23,8 @@ require(DT)
 require(kableExtra)
 require(dplyr)
 require(sparkline)
+require(htmlwidgets)
+require(jsonlite)
 require(parallel)
 require(RcppRoll)
 ```
@@ -118,7 +120,7 @@ write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
 ```{r table1, include=TRUE}
 DT::datatable(df, 
 							filter = 'top', 
-							caption = "Illumina fastq files summary generated with angelovangel/faster",
+							caption = "Illumina fastq files summary",
 					#extensions = 'Buttons', 
 					options = list(dom = 'Btp'
 												 #buttons = c('copy', 'csv', 'excel')
@@ -175,14 +177,27 @@ spark_gc <- function(gc_density_obj) {
 					)
 }
 
+spk_tool <- function(labels, values) {
+   htmlwidgets::JS(
+     sprintf(
+ 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+     jsonlite::toJSON(paste0("qscore ", labels, " : ",values))
+     )
+   )
+ }
 spark_phred <- function(phred_density_obj) {
-	spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
-					spotColor = FALSE,
-					minSpotColor = FALSE,
-					maxSpotColor = "red",
-					spotRadius = 3,
-					width = 180, height = 40,
-					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
+	#spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
+	spk_chr(round(phred_density_obj$y, digits = 2), 
+					type = "bar",
+					 # to highlight q-value of 30, only array (60 elements) seems to work, don't know how to pass range map here
+					colorMap = c(rep("#3366cc", 19), "red", rep("#3366cc", 9), "red", rep("#3366cc", 30)),
+					#spotColor = FALSE,
+					#minSpotColor = FALSE,
+					#maxSpotColor = "red",
+					#spotRadius = 3,
+					width = 320, height = 40,
+					tooltipFormatter = spk_tool(phred_density_obj$x, round(phred_density_obj$y, 2))
+					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{y}} {{suffix}}</span>"
 					)
 }
 # spark_gc <- function(qqobj, i) {
@@ -241,7 +256,8 @@ gc_df <- data.frame(
 
 gc_df %>%
 	dplyr::arrange(file) %>%
-	kableExtra::kbl(escape = F) %>%
+	kableExtra::kbl(escape = F, 
+									caption = "Density distributions of GC-content and 'mean' q-score. The q-scores 20 and 30 are in red") %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 
 ```
