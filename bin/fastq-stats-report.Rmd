@@ -9,11 +9,8 @@ params:
   fqfiles: NULL
 ---
 
-<<<<<<< HEAD
 Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline. All fastq data is calculated with the [faster](https://github.com/angelovangel/faster) program.
-=======
-Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline
->>>>>>> parent of c8b54c4... Revert "use faster in all rmarkdown reports"
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE, 
@@ -124,11 +121,7 @@ write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
 ```{r table1, include=TRUE}
 DT::datatable(df, 
 							filter = 'top', 
-<<<<<<< HEAD
-							caption = "Illumina fastq files summary",
-=======
 							caption = "Illumina fastq files summary generated with angelovangel/faster",
->>>>>>> parent of c8b54c4... Revert "use faster in all rmarkdown reports"
 					#extensions = 'Buttons', 
 					options = list(dom = 'Btp'
 												 #buttons = c('copy', 'csv', 'excel')
@@ -155,29 +148,6 @@ faster_gc <- function(x) {
     # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 100
     density(from = 0, to = 1, n = 100, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
     #hist(plot = FALSE, breaks = c(0:100))
-<<<<<<< HEAD
-}
-
-faster_qscore <- function(x) {
-  system2("faster", args = c("--qscore", x), stdout = TRUE) %>%
-    as.numeric() %>%
-    # actually use density() here, not hist(). It returns a density list object with x and y, x is fixed from 1 to 50
-    density(from = 1, to = 60, n = 60, na.rm = TRUE) # n is the number of equally spaced points at which the density is to be estimated.
-  #
-}
-
-#---------------------------------#
-# functions for making sparklines	#
-#---------------------------------#
-
-sparkline(0) # load dependencies
-
-# see https://omnipotent.net/jquery.sparkline/#s-docs
-# on how to include both x and y values in spark
-# basically, supply values separated by a colon: x:y,x:y,x:y
-spark_gc <- function(gc_density_obj) {
-	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
-=======
 }
 
 faster_qscore <- function(x) {
@@ -204,19 +174,6 @@ spark_gc <- function(gc_density_obj) {
 					maxSpotColor = "red",
 					spotRadius = 3,
 					width = 180, height = 40,
-					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
-					)
-}
-
-spark_phred <- function(phred_density_obj) {
-	spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
->>>>>>> parent of c8b54c4... Revert "use faster in all rmarkdown reports"
-					spotColor = FALSE,
-					minSpotColor = FALSE,
-					maxSpotColor = "red",
-					spotRadius = 3,
-					width = 180, height = 40,
-<<<<<<< HEAD
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
 }
@@ -228,23 +185,18 @@ spk_tool <- function(labels, values) {
      jsonlite::toJSON(paste0("qscore ", labels, " : ",values))
      )
    )
- }
+}
+
 spark_phred <- function(phred_density_obj) {
 	#spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
 	spk_chr(round(phred_density_obj$y, digits = 2), 
 					type = "bar",
 					 # to highlight q-value of 30, only array (60 elements) seems to work, don't know how to pass range map here
 					colorMap = c(rep("#3366cc", 19), "red", rep("#3366cc", 9), "red", rep("#3366cc", 30)),
-					#spotColor = FALSE,
-					#minSpotColor = FALSE,
-					#maxSpotColor = "red",
-					#spotRadius = 3,
 					width = 320, height = 40,
 					tooltipFormatter = spk_tool(phred_density_obj$x, round(phred_density_obj$y, 2))
 					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{y}} {{suffix}}</span>"
-=======
-					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
->>>>>>> parent of c8b54c4... Revert "use faster in all rmarkdown reports"
+					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
 					)
 }
 # spark_gc <- function(qqobj, i) {
@@ -303,12 +255,8 @@ gc_df <- data.frame(
 
 gc_df %>%
 	dplyr::arrange(file) %>%
-<<<<<<< HEAD
 	kableExtra::kbl(escape = F, 
 									caption = "Density distributions of GC-content and 'mean' q-score. The q-scores 20 and 30 are in red") %>%
-=======
-	kableExtra::kbl(escape = F) %>%
->>>>>>> parent of c8b54c4... Revert "use faster in all rmarkdown reports"
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 
 ```
