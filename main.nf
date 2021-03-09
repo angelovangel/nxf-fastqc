@@ -113,7 +113,7 @@ reads = readsdir_repaired + params.fqpattern
 
 // get counts of found fastq files
 readcounts = file(reads)
-//println readcounts.size()
+println " Reads found:            ${ANSI_GREEN}${readcounts.size()}${ANSI_RESET}"
 
 // channel for read pairs --> fastp
 Channel 
@@ -126,19 +126,6 @@ Channel
     .fromPath( reads, checkIfExists: true )
     .set { reads_ch }
 
-//===============================
-// some extra features, but too slow
-//myDir = file(params.reads).getLast().getParent() //ugly way to get dir out of params.reads
-/*
-myDir = file(params.readsdir)
-myDir.eachFile { item ->
-    if( item.getName() =~ /fastq.gz$/) {
-        println "${ item.getName() } has ${ item.countFastq() } reads"
-    }
-    
-}
-*/
-//=========================
 
 // fastp trimmed files are published, json are only sent in the channel and used only by multiqc
 process fastp {
@@ -151,7 +138,8 @@ process fastp {
         tuple sample_id, file(x) from read_pairs_ch
     
     output:
-        tuple file("${sample_id}_fastp.json"), file('fastp_trimmed/trim_*') into fastp_ch
+        file("${sample_id}_fastp.json") into fastp_ch
+        file('fastp_trimmed/trim_*')
         file("${sample_id}_fastp.json") into fastp_ch2
         val seqmode into seqmode_ch
 
@@ -230,7 +218,7 @@ process multiqc {
         file x from fastp_ch.collect()
         file mqc_config
         val y from total_reads // y is a string with 4 values sep by new line now, but still length 1
-        val seqmode from seqmode_ch // PE or SE, see process fastp
+        val seqmode from seqmode_ch.last() // PE or SE, see process fastp, last() because it emits one entry for each fastq file
 
     output:
         file('multiqc_report.html')
@@ -253,13 +241,13 @@ process multiqc {
                               Total reads    after filter: ** ${ splitstring[1] } ** <br>
                               Total bases before filter: ** ${ splitstring[2] } ** <br>
                               Total bases    after filter: ** ${ splitstring[3] } ** <br> <br>
-                              See also the seqTools report: 
+                              See also the report: 
                               <a href="fastq-stats-report.html" target="_blank">fastq-stats-report.html</a>, 
                               which contains per-read data about Phred-score and k-mer distribution, N50 etc. <br>
                               The raw data from both reports (as *.csv files) can be found in the results folder.'
                     }
                 " \
-    .
+    ${x}
     """
 } 
 
