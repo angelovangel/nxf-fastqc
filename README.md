@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/angelovangel/nextflow-fastp.svg?branch=master)](https://travis-ci.com/angelovangel/nextflow-fastp)
+[![Build Status](https://travis-ci.com/angelovangel/nxf-fastqc.svg?branch=master)](https://travis-ci.com/angelovangel/nxf-fastqc)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.08.0-brightgreen.svg)](https://www.nextflow.io/)
 
 
