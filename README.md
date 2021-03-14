@@ -2,13 +2,15 @@
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.08.0-brightgreen.svg)](https://www.nextflow.io/)
 
 
-# nextflow-fastp
+# nxf-fastqc
 A simple fastp-MultiQC pipeline, written in [nextflow](https://www.nextflow.io/).
-For a bunch of fastq files in a directory (PE or SE), run it with:
+For a bunch of fastq files in a directory (Illumina PE or SE, Nanopore), run it with:
 
 ```
 nextflow run angelovangel/nextflow-fastp --readsdir path/to/fastqfiles/
 ```
+
+For Nanopore reads, add `-profile ont` to the command.
 
 The pipeline executes [fastp](https://github.com/OpenGene/fastp), saves the filtered files in `results-fastp/fastp_trimmed`, and generates a [MultiQC](https://multiqc.info/) report. That's it!
 
