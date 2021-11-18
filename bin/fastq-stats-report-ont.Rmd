@@ -63,10 +63,17 @@ write_xlsx(df, "fastq-stats.xlsx", format_headers = TRUE, col_names = TRUE)
 ### Number of reads and read quality metrics (Nanopore reads)
 
 ```{r table1, include=TRUE}
+num_seqs <- df %>% dplyr::summarise(seqs = sum(num_seqs)) %>% as.numeric()
+num_bases <- df %>% dplyr::summarise(bases = sum(bases)) %>% as.numeric()
 
 DT::datatable(df, 
 							filter = 'top', 
-							caption = "ONT fastq files summary generated with angelovangel/faster",
+							caption = paste0("A total of ", nrow(df), " fastq files with ", 
+															 format(num_seqs, big.mark = ","), 
+															 " reads and ", 
+															 format(num_bases, big.mark = ","), 
+															 " bases."
+															 ),
 					#extensions = 'Buttons', 
 					options = list(dom = 'Btp'
 												 #buttons = c('copy', 'csv', 'excel')
