@@ -15,36 +15,8 @@ ANSI_GREEN = "\033[1;32m"
 ANSI_RED = "\033[1;31m"
 ANSI_RESET = "\033[0m"
 
-// date needed to prefix results dir
-DATE = new java.util.Date()
-sdf = new java.text.SimpleDateFormat("yyyy-MM-dd")
-fdate = sdf.format(DATE)
-//println sdf.format(DATE)
-
-// needed to pretty print read/bases counts
-import java.text.DecimalFormat
-df = new DecimalFormat("###,###") //TODO add symbols to fix US locale, http://tutorials.jenkov.com/java-internationalization/decimalformat.html#creating-a-decimalformat-for-a-specific-locale
-//println df.format( 5.13e+23.toBigInteger() )
-
-/*
-
-in bash this works OK:
-LC_NUMERIC=en_GB.UTF-8 printf "%'.0f\n" 1.345e+12
-
-or in ksh (only separately, not as part of a pipe or with xargs)
-printf '%#d\n' 105000000
-gives 
-105M directly! works for G, T, P ...why not in bash?
-
-even this works!!!
-printf "%#d" 12e+12
-
-so no need for java classes
+/* pipeline input parameters 
 */
-
-/* 
- * pipeline input parameters 
- */
 params.readsdir = "fastq"
 params.outdir = "${workflow.launchDir}/results-fastqc"
 params.fqpattern = "*R{1,2}*.fastq.gz"

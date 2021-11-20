@@ -9,7 +9,7 @@ params:
   fqfiles: NULL
 ---
 
-Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline
+Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline. All fastq data is calculated with the [faster](https://github.com/angelovangel/faster) program.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE, 
