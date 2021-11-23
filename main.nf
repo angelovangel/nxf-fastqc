@@ -93,7 +93,7 @@ Channel
     .ifEmpty { error "Can not find any reads matching ${reads}" }
     .set{ read_pairs_ch }
 
-// channel for reads --> seqtools
+// channel for reads --> Rmd report
 Channel
     .fromPath( reads, checkIfExists: true )
     .set { reads_ch }
@@ -110,9 +110,10 @@ process fastp {
         tuple sample_id, file(x) from read_pairs_ch
     
     output:
-        file("${sample_id}_fastp.json") into fastp_ch
+        file("${sample_id}_fastp.json") into fastp_ch // for multiqc
         file('fastp_trimmed/trim_*')
-        file("${sample_id}_fastp.json") into fastp_ch2
+        file("${sample_id}_fastp.json") into fastp_ch2 // for summary process
+        file("${sample_id}_fastp.json") into fastp_ch3 // for Rmd report
         val seqmode into seqmode_ch
 
 
@@ -179,6 +180,8 @@ process summary {
     cat treads-before.tmp treads-after.tmp tbases-before.tmp tbases-after.tmp | xargs siformat.sh
     """
 }
+// to setup content curves, content per cycle..
+// jq '.read1_before_filtering.conteyont_curves.A' work/6a/0434159da8b7d63f7ddb21c74eb659/minigut_sample1_fastp.json
 
 //=========================
 process multiqc {
@@ -233,6 +236,7 @@ if (!params.ontreads) {
 
     input:
         file x from reads_ch.collect()
+        file y from fastp_ch3.collect()
         file 'fastq-stats-report.Rmd' from fastq_stats_report_ch
 
     output:
@@ -241,8 +245,10 @@ if (!params.ontreads) {
         file "fastq-stats.xlsx"
     
     script:
+    // the script gets executed with these files as args, they are split later in R
+    // seqtools.R file1.fastq.gz file2.fastq.gz file1_fastp.json file2_fastp.json
     """
-    seqtools.R $x
+    seqtools.R $x $y
     """
     }
 } else {

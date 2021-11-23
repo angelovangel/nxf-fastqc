@@ -1,12 +1,12 @@
 ---
-title: "Illumina fastq quality control metrics"
+title: "Illumina fastq QC metrics"
 output:
   html_document:
     highlight: tango
     theme: cosmo
     toc: no
 params:
-  fqfiles: NULL
+  files: NULL
 ---
 
 Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline. All fastq data is calculated with the [faster](https://github.com/angelovangel/faster) program.
@@ -17,7 +17,8 @@ knitr::opts_chunk$set(include = FALSE,
                       echo = FALSE, 
                       warning = FALSE, 
                       cache = FALSE)
-require(seqTools)
+#require(seqTools)
+require(stringr)
 require(writexl)
 require(knitr)
 require(DT)
@@ -27,7 +28,7 @@ require(sparkline)
 require(htmlwidgets)
 require(jsonlite)
 require(parallel)
-require(RcppRoll)
+#require(RcppRoll)
 ```
 
 ```{r faster}
@@ -36,8 +37,11 @@ stats_headers <- c("file", "num_seqs", "bases", "n_bases",
 									 "min_len", "max_len", "avg_len", "Q1", "Q2", "Q3", 
 									 "N50", "Q20_percent", "Q30_percent")
 
+fqfiles <- params$files[grep("\\.fastq", params$files)]
+jsonfiles <- params$files[grep("\\.json", params$files)]
+
 stats <- system2(command = "parallel", 
-								 args = c("-k", "--will-cite", "faster", "-t", ":::", params$fqfiles), 
+								 args = c("-k", "--will-cite", "faster", "-t", ":::", fqfiles), 
 								 stdout = TRUE)
 
 
@@ -177,14 +181,32 @@ sparkline(0) # load dependencies
 # basically, supply values separated by a colon: x:y,x:y,x:y
 spark_gc <- function(gc_density_obj) {
 	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
+					lineWidth = 2,
+					fillColor = "#D6EAF8",
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 180, height = 40,
+					width = 200, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
 }
+
+spark_q_percycle <- function(json) {
+	j <- jsonlite::fromJSON(json)
+	values <- j$read1_before_filtering$quality_curves$mean
+	
+	spk_chr(paste( seq(1, length(values)), ":", values, sep = "" ), 
+					lineWidth = 2,
+					fillColor = "#D6EAF8",
+					spotColor = FALSE,
+					minSpotColor = FALSE,
+					maxSpotColor = FALSE,
+					width = 200, height = 40,
+					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}cycle: {{x}} meanq: {{y}} {{suffix}}</span>"
+					)
+}
+
 
 spk_tool <- function(labels, values) {
    htmlwidgets::JS(
@@ -247,15 +269,17 @@ spark_phred <- function(phred_density_obj) {
 # }
 
 gc_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { faster_gc(params$fqfiles[y]) })
+	mclapply(1:length(fqfiles), function(y) { faster_gc(fqfiles[y]) })
 
 q_score_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { faster_qscore(params$fqfiles[y]) })
+	mclapply(1:length(fqfiles), function(y) { faster_qscore(fqfiles[y]) })
 
 gc_df <- data.frame(
-	file = basename(params$fqfiles),
+	file = basename(fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
+	q_score_percycle = sapply(jsonfiles, spark_q_percycle),
 	q_score_dist = sapply(q_score_density, spark_phred)
+	
 	#gc_content_dist = sapply(1:length(qq), function(x) { spark_gc(qq, x) }),
 	#q_score_dist = sapply(1:length(qq), function(x) { spark_phred(qq, x) }),
 	#k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })

@@ -15,7 +15,7 @@ rmarkdown::render(input = "fastq-stats-report.Rmd",
 									output_file = "fastq-stats-report.html", 
 									output_dir = getwd(), # important when knitting in docker 
 									knit_root_dir = getwd(), # important when knitting in docker 
-									params = list(fqfiles = args)
+									params = list(files = args)
 									)
 
 # this solved the seqfault error
