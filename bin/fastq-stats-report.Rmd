@@ -37,15 +37,14 @@ stats_headers <- c("file", "num_seqs", "bases", "n_bases",
 									 "min_len", "max_len", "avg_len", "Q1", "Q2", "Q3", 
 									 "N50", "Q20_percent", "Q30_percent")
 
-fqfiles <- params$files[grep("\\.fastq", params$files)]
-jsonfiles <- params$files[grep("\\.json", params$files)]
+fqfiles <- params$files
 
 stats <- system2(command = "parallel", 
 								 args = c("-k", "--will-cite", "faster", "-t", ":::", fqfiles), 
 								 stdout = TRUE)
 
 
-df <- stats[grep("^file", stats, invert = TRUE)] %>% 
+df <- stats[grep("^file", stats, invert = TRUE)] %>% # this can be removed if the -ts option in faster is used
 	read.table(text = ., col.names = stats_headers) %>% 
 	dplyr::mutate(file = basename(file)) %>% 
 	dplyr::arrange(file) %>%
@@ -187,25 +186,61 @@ spark_gc <- function(gc_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 200, height = 40,
+					width = 300, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
 }
 
-spark_q_percycle <- function(json) {
-	j <- jsonlite::fromJSON(json)
-	values <- j$read1_before_filtering$quality_curves$mean
-	
-	spk_chr(paste( seq(1, length(values)), ":", values, sep = "" ), 
-					lineWidth = 2,
-					fillColor = "#D6EAF8",
-					spotColor = FALSE,
-					minSpotColor = FALSE,
-					maxSpotColor = FALSE,
-					width = 200, height = 40,
-					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}cycle: {{x}} meanq: {{y}} {{suffix}}</span>"
-					)
-}
+# make a composite spark for content per cycle from the fastp json file
+# spark_content <- function(json) {
+# 	j <- jsonlite::fromJSON(json)
+# 	at_vals <- j$read1_before_filtering$content_curves$A + j$read1_before_filtering$content_curves$T
+# 	gc_vals <- j$read1_before_filtering$content_curves$C + j$read1_before_filtering$content_curves$G
+# 	
+# 	
+# 	at_spk <- sparkline(at_vals, 
+# 										 lineColor = "#d7191c", 
+# 										 lineWidth = 2,
+# 										 width = 220,
+# 										 height = 40,
+# 										 spotColor = FALSE, 
+# 										 minSpotColor = FALSE,
+# 										 maxSpotColor = FALSE,
+# 										 chartRangeMin = 0, 
+# 										 chartRangeMax = 1, 
+# 										 fillColor = FALSE)
+# 	gc_spk <- sparkline(gc_vals, 
+# 										 #lineColor = "#2c7bb6",
+# 										 lineWidth = 2,
+# 										 width = 220,
+# 										 height = 40,
+# 										 spotColor = FALSE, 
+# 										 minSpotColor = FALSE,
+# 										 maxSpotColor = FALSE,
+# 										 chartRangeMin = 0, 
+# 										 chartRangeMax = 1, 
+# 										 fillColor = FALSE)
+# 	
+# 	comp_spk <- spk_composite(at_spk, gc_spk)
+# 	as.character(htmltools::as.tags(comp_spk))
+# 	
+# }
+
+# make a q score per cycle spark from the fastp json file
+# spark_q_percycle <- function(json) {
+# 	j <- jsonlite::fromJSON(json)
+# 	values <- j$read1_before_filtering$quality_curves$mean
+# 	
+# 	spk_chr(paste( seq(1, length(values)), ":", values, sep = "" ), 
+# 					lineWidth = 2,
+# 					fillColor = "#D6EAF8",
+# 					spotColor = FALSE,
+# 					minSpotColor = FALSE,
+# 					maxSpotColor = FALSE,
+# 					width = 220, height = 40,
+# 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}cycle: {{x}} meanq: {{y}} {{suffix}}</span>"
+# 					)
+# }
 
 
 spk_tool <- function(labels, values) {
@@ -223,7 +258,7 @@ spark_phred <- function(phred_density_obj) {
 					type = "bar",
 					 # to highlight q-value of 30, only array (60 elements) seems to work, don't know how to pass range map here
 					colorMap = c(rep("#3366cc", 19), "red", rep("#3366cc", 9), "red", rep("#3366cc", 30)),
-					width = 320, height = 40,
+					width = 300, height = 40,
 					tooltipFormatter = spk_tool(phred_density_obj$x, round(phred_density_obj$y, 2))
 					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{y}} {{suffix}}</span>"
 					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
@@ -277,8 +312,11 @@ q_score_density <-
 gc_df <- data.frame(
 	file = basename(fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
-	q_score_percycle = sapply(jsonfiles, spark_q_percycle),
+	#content_percycle = sapply(jsonfiles, spark_content),
 	q_score_dist = sapply(q_score_density, spark_phred)
+	#q_score_percycle = sapply(jsonfiles, spark_q_percycle)
+	
+	
 	
 	#gc_content_dist = sapply(1:length(qq), function(x) { spark_gc(qq, x) }),
 	#q_score_dist = sapply(1:length(qq), function(x) { spark_phred(qq, x) }),

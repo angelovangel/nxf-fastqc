@@ -113,7 +113,7 @@ process fastp {
         file("${sample_id}_fastp.json") into fastp_ch // for multiqc
         file('fastp_trimmed/trim_*')
         file("${sample_id}_fastp.json") into fastp_ch2 // for summary process
-        file("${sample_id}_fastp.json") into fastp_ch3 // for Rmd report
+        //file("${sample_id}_fastp.json") into fastp_ch3 // for Rmd report
         val seqmode into seqmode_ch
 
 
@@ -236,7 +236,7 @@ if (!params.ontreads) {
 
     input:
         file x from reads_ch.collect()
-        file y from fastp_ch3.collect()
+        //file y from fastp_ch3.collect()
         file 'fastq-stats-report.Rmd' from fastq_stats_report_ch
 
     output:
@@ -248,7 +248,7 @@ if (!params.ontreads) {
     // the script gets executed with these files as args, they are split later in R
     // seqtools.R file1.fastq.gz file2.fastq.gz file1_fastp.json file2_fastp.json
     """
-    seqtools.R $x $y
+    seqtools.R $x
     """
     }
 } else {
