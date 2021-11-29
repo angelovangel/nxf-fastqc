@@ -9,7 +9,7 @@ params:
   files: NULL
 ---
 
-Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline. All fastq data is calculated with the [faster](https://github.com/angelovangel/faster) program.
+Report generated on `r Sys.time()` by the [angelovangel/nxf-fastqc](https://github.com/angelovangel/nxf-fastqc) pipeline. All fastq data is calculated with the [faster](https://github.com/angelovangel/faster) and [fastkmers](https://github.com/angelovangel/fastkmers) programs.
 
 
 ```{r setup, include=FALSE}
@@ -27,7 +27,7 @@ require(dplyr)
 require(sparkline)
 require(htmlwidgets)
 require(jsonlite)
-require(parallel)
+require(parallel) # may be ships with R, so not in the environment.yml
 #require(RcppRoll)
 ```
 
@@ -146,7 +146,7 @@ DT::datatable(df,
 
 ***
 
-### GC-content and Phred-score distributions
+### GC-content, Phred-score and k-mer distributions
 ```{r table2, include=TRUE}
 sparkline(0) # load dependencies
 # see https://omnipotent.net/jquery.sparkline/#s-docs
@@ -169,15 +169,31 @@ faster_qscore <- function(x) {
   #
 }
 
+fastkmers <- function(x) {
+	kmers <- system2("fastkmers", args = c("-k 3", x), stdout = TRUE)
+	read.table(text = kmers, sep = "\t", header = FALSE, col.names = c("kmer", "counts")) %>%
+		dplyr::arrange(kmer) # in order to compare across files
+}
+
 #---------------------------------#
 # functions for making sparklines	#
 #---------------------------------#
 
 sparkline(0) # load dependencies
 
+spk_tool <- function(label, x, values) {
+   htmlwidgets::JS(
+     sprintf(
+ 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+     jsonlite::toJSON(paste(label, x, ":",values, sep = " "))
+     )
+   )
+}
+
 # see https://omnipotent.net/jquery.sparkline/#s-docs
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
+
 spark_gc <- function(gc_density_obj) {
 	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
 					lineWidth = 2,
@@ -186,70 +202,9 @@ spark_gc <- function(gc_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 300, height = 40,
+					width = 220, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
-}
-
-# make a composite spark for content per cycle from the fastp json file
-# spark_content <- function(json) {
-# 	j <- jsonlite::fromJSON(json)
-# 	at_vals <- j$read1_before_filtering$content_curves$A + j$read1_before_filtering$content_curves$T
-# 	gc_vals <- j$read1_before_filtering$content_curves$C + j$read1_before_filtering$content_curves$G
-# 	
-# 	
-# 	at_spk <- sparkline(at_vals, 
-# 										 lineColor = "#d7191c", 
-# 										 lineWidth = 2,
-# 										 width = 220,
-# 										 height = 40,
-# 										 spotColor = FALSE, 
-# 										 minSpotColor = FALSE,
-# 										 maxSpotColor = FALSE,
-# 										 chartRangeMin = 0, 
-# 										 chartRangeMax = 1, 
-# 										 fillColor = FALSE)
-# 	gc_spk <- sparkline(gc_vals, 
-# 										 #lineColor = "#2c7bb6",
-# 										 lineWidth = 2,
-# 										 width = 220,
-# 										 height = 40,
-# 										 spotColor = FALSE, 
-# 										 minSpotColor = FALSE,
-# 										 maxSpotColor = FALSE,
-# 										 chartRangeMin = 0, 
-# 										 chartRangeMax = 1, 
-# 										 fillColor = FALSE)
-# 	
-# 	comp_spk <- spk_composite(at_spk, gc_spk)
-# 	as.character(htmltools::as.tags(comp_spk))
-# 	
-# }
-
-# make a q score per cycle spark from the fastp json file
-# spark_q_percycle <- function(json) {
-# 	j <- jsonlite::fromJSON(json)
-# 	values <- j$read1_before_filtering$quality_curves$mean
-# 	
-# 	spk_chr(paste( seq(1, length(values)), ":", values, sep = "" ), 
-# 					lineWidth = 2,
-# 					fillColor = "#D6EAF8",
-# 					spotColor = FALSE,
-# 					minSpotColor = FALSE,
-# 					maxSpotColor = FALSE,
-# 					width = 220, height = 40,
-# 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}cycle: {{x}} meanq: {{y}} {{suffix}}</span>"
-# 					)
-# }
-
-
-spk_tool <- function(labels, values) {
-   htmlwidgets::JS(
-     sprintf(
- 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-     jsonlite::toJSON(paste0("qscore ", labels, " : ",values))
-     )
-   )
 }
 
 spark_phred <- function(phred_density_obj) {
@@ -258,75 +213,34 @@ spark_phred <- function(phred_density_obj) {
 					type = "bar",
 					 # to highlight q-value of 30, only array (60 elements) seems to work, don't know how to pass range map here
 					colorMap = c(rep("#3366cc", 19), "red", rep("#3366cc", 9), "red", rep("#3366cc", 30)),
-					width = 300, height = 40,
-					tooltipFormatter = spk_tool(phred_density_obj$x, round(phred_density_obj$y, 2))
-					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{y}} {{suffix}}</span>"
-					#tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
+					width = 220, height = 40,
+					tooltipFormatter = spk_tool("qscore ",phred_density_obj$x, round(phred_density_obj$y, 2))
 					)
 }
-# spark_gc <- function(qqobj, i) {
-# 	spk_chr(paste(names( gcContent(qqobj[[i]], 1) ), 
-# 								":", 
-# 								round(RcppRoll::roll_mean(gcContent(qqobj[[i]], 1), n = 10)/qqobj[[i]]@nReads, 3), sep = ""), 
-# 					# GC content (%) is per Read counts, so to get dist divide by read count
-# 					spotColor = FALSE,
-# 					minSpotColor = FALSE,
-# 					maxSpotColor = "red",
-# 					spotRadius = 3,
-# 					width = 180, height = 40,
-# 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} : {{y}} {{suffix}}</span>"
-# 					)
-# }
-# 
-# spark_phred <- function(qqobj, i) {
-# 	spk_chr(paste( names(phredDist(qqobj[[i]]) ), ":", round( phredDist(qqobj[[i]]), 3 ), sep = ""), 
-# 					spotColor = FALSE,
-# 					minSpotColor = FALSE,
-# 					maxSpotColor = "red",
-# 					spotRadius = 3,
-# 					width = 180, height = 40,
-# 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score {{x}} : {{y}} {{suffix}}</span>"
-# 					)
-# }
-# 
-# spk_tool <- function(labels, values) {
-#   htmlwidgets::JS(
-#     sprintf(
-# 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-#     jsonlite::toJSON(paste0(labels, " : ",values))
-#     )
-#   )
-# }
-# spark_kmers <- function(qqobj, i) {
-# 	spk_chr(unname(qqobj[[i]]@kmer), width = 320, height = 40, type = "bar",
-# 					tooltipFormatter = spk_tool( dimnames(qqobj[[i]]@kmer)[[1]], qqobj[[i]]@kmer )
-# 					)
-# }
 
-gc_density <- 
-	mclapply(1:length(fqfiles), function(y) { faster_gc(fqfiles[y]) })
+spark_kmers <- function(kmers_tbl) {
+	spk_chr(kmers_tbl$counts, type = "bar", 
+					width = 340, height = 40,
+					tooltipFormatter = spk_tool("", kmers_tbl$kmer, kmers_tbl$counts)
+					)
+}
 
-q_score_density <- 
-	mclapply(1:length(fqfiles), function(y) { faster_qscore(fqfiles[y]) })
+gc_density <- mclapply(1:length(fqfiles), function(y) { faster_gc(fqfiles[y]) })
+q_score_density <- mclapply(1:length(fqfiles), function(y) { faster_qscore(fqfiles[y]) })
+kmers_tbl_list <- mclapply(1:length(fqfiles), function(y) {fastkmers(fqfiles[y]) })
 
 gc_df <- data.frame(
 	file = basename(fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
 	#content_percycle = sapply(jsonfiles, spark_content),
-	q_score_dist = sapply(q_score_density, spark_phred)
-	#q_score_percycle = sapply(jsonfiles, spark_q_percycle)
-	
-	
-	
-	#gc_content_dist = sapply(1:length(qq), function(x) { spark_gc(qq, x) }),
-	#q_score_dist = sapply(1:length(qq), function(x) { spark_phred(qq, x) }),
-	#k_mer_counts = sapply(1:length(qq), function(x) { spark_kmers(qq, x) })
+	q_score_dist = sapply(q_score_density, spark_phred),
+	kmer_counts = sapply(kmers_tbl_list, spark_kmers)
 )
 
 gc_df %>%
 	dplyr::arrange(file) %>%
 	kableExtra::kbl(escape = F, 
-									caption = "Density distributions of GC-content and 'mean' q-score. The q-scores 20 and 30 are in red") %>%
+									caption = "Density distributions of GC-content and 'mean' q-score. The q-scores 20 and 30 are in red, k-mer = 3.") %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 
 ```

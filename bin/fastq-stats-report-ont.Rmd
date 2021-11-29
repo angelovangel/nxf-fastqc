@@ -134,7 +134,7 @@ spark_gc <- function(gc_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 200, height = 40,
+					width = 220, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
 }
@@ -147,7 +147,7 @@ spark_phred <- function(phred_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 200, height = 40,
+					width = 220, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
 					)
 }
@@ -164,7 +164,7 @@ spark_len <- function(len_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 320, height = 40,
+					width = 340, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}length: {{x}} {{suffix}}</span>",
 					numberFormatter = log_formatter
 					)
