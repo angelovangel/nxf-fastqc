@@ -171,7 +171,7 @@ faster_qscore <- function(x) {
 
 fastkmers <- function(x) {
 	kmers <- system2("fastkmers", args = c("-k 3", x), stdout = TRUE)
-	read.table(text = kmers, sep = "\t", header = FALSE, col.names = c("kmer", "counts")) %>%
+	read.table(text = kmers, sep = "\t", header = TRUE, col.names = c("kmer", "counts")) %>%
 		dplyr::arrange(kmer) # in order to compare across files
 }
 
