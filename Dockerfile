@@ -12,7 +12,7 @@ RUN wget -P bin https://github.com/angelovangel/faster/releases/download/v0.1.4/
 mv bin/x86_64_linux_faster bin/faster && \
 chmod 755 bin/faster
 
-RUN wget -P bin https://github.com/angelovangel/fastkmers/releases/download/v0.1.0/fastkmers && \
+RUN wget -P bin https://github.com/angelovangel/fastkmers/releases/download/v0.1.2/fastkmers && \
 chmod 755 bin/fastkmers
 
 
