@@ -12,7 +12,7 @@ nextflow run angelovangel/nextflow-fastp --readsdir path/to/fastqfiles/
 
 For Nanopore reads, add `-profile ont` to the command.
 
-The pipeline executes [fastp](https://github.com/OpenGene/fastp), saves the filtered files in `results-fastp/fastp_trimmed`, and generates a [MultiQC](https://multiqc.info/) report. That's it!
+The pipeline executes [fastp](https://github.com/OpenGene/fastp), saves the filtered files in `results-fastp/fastp_trimmed`, and generates a [MultiQC](https://multiqc.info/) report. Some more detailed statistics are provided in an additional html report, using the [faster](https://github.com/angelovangel/faster) and [fastkmers](https://github.com/angelovangel/fastkmers) programs.
 
 For all available options, try
 
