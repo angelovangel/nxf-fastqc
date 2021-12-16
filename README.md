@@ -3,7 +3,7 @@
 
 
 # nxf-fastqc
-A simple fastp-MultiQC pipeline, written in [nextflow](https://www.nextflow.io/).
+A simple pipeline for QC of fastq files, written in [nextflow](https://www.nextflow.io/).
 For a bunch of fastq files in a directory (Illumina PE or SE, Nanopore), run it with:
 
 ```
@@ -12,9 +12,9 @@ nextflow run angelovangel/nextflow-fastp --readsdir path/to/fastqfiles/
 
 For Nanopore reads, add `-profile ont` to the command.
 
-The pipeline executes [fastp](https://github.com/OpenGene/fastp), saves the filtered files in `results-fastp/fastp_trimmed`, and generates a [MultiQC](https://multiqc.info/) report ([example](https://angelovangel.github.io/nxf-fastqc/multiqc_report.html)). Some more detailed statistics are provided in an additional html report, using the [faster](https://github.com/angelovangel/faster) and [fastkmers](https://github.com/angelovangel/fastkmers) programs ([example](https://angelovangel.github.io/nxf-fastqc/fastq-stats-report.html)).
+The pipeline executes [fastp](https://github.com/OpenGene/fastp), saves the filtered files in `results-fastp/fastp_trimmed`, and generates a [MultiQC](https://multiqc.info/) report ([example report](https://angelovangel.github.io/nxf-fastqc/multiqc_report.html)). Some more detailed fastq file statistics are provided in an additional html report, using the [faster](https://github.com/angelovangel/faster) and [fastkmers](https://github.com/angelovangel/fastkmers) programs ([example Illumina](https://angelovangel.github.io/nxf-fastqc/fastq-stats-report.html), [example Nanopore](https://angelovangel.github.io/nxf-fastqc/fastq-stats-report-ont.html)).
 
-For all available options, try
+For all available pipeline options, try
 
 ```
 nextflow run angelovangel/nextflow-fastp --help

@@ -116,6 +116,12 @@ faster_len <- function(x) {
 		log10() %>%
 		density(from = 2, to = 5, n = 100, na.rm = TRUE)
 }
+# make kmers
+fastkmers <- function(x) {
+	kmers <- system2("fastkmers", args = c("-k 3", "-v", x), stdout = TRUE)
+	read.table(text = kmers, sep = "\t", header = TRUE, col.names = c("kmer", "counts")) %>%
+		dplyr::arrange(kmer) # in order to compare across files
+}
 
 #---------------------------------#
 # functions for making sparklines	#
@@ -126,6 +132,17 @@ sparkline(0) # load dependencies
 # see https://omnipotent.net/jquery.sparkline/#s-docs
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
+
+spk_tool <- function(label, x, values) {
+   htmlwidgets::JS(
+     sprintf(
+ 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
+     jsonlite::toJSON(paste(label, x, ":",values, sep = " "))
+     )
+   )
+}
+
+
 spark_gc <- function(gc_density_obj) {
 	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
 					lineWidth = 2,
@@ -134,7 +151,7 @@ spark_gc <- function(gc_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 220, height = 40,
+					width = 180, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}avg GC% {{x}} {{suffix}}</span>"
 					)
 }
@@ -147,7 +164,7 @@ spark_phred <- function(phred_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 220, height = 40,
+					width = 180, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}q-score: {{x}} {{suffix}}</span>"
 					)
 }
@@ -164,25 +181,19 @@ spark_len <- function(len_density_obj) {
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
 					spotRadius = 3,
-					width = 340, height = 40,
+					width = 260, height = 40,
 					tooltipFormat = "<span style='color: {{color}}'>&#9679;</span> {{prefix}}length: {{x}} {{suffix}}</span>",
 					numberFormatter = log_formatter
 					)
 }
 
-# spk_tool <- function(labels, values) {
-#   htmlwidgets::JS(
-#     sprintf(
-# 		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-#     jsonlite::toJSON(paste0(labels, " : ",values))
-#     )
-#   )
-# }
-# spark_kmers <- function(chr) {
-# 	spk_chr(unname(chr), width = 320, height = 40, type = "bar",
-# 					tooltipFormatter = spk_tool( names(chr), chr )
-# 					)
-# }
+spark_kmers <- function(kmers_tbl) {
+	spk_chr(kmers_tbl$counts, type = "bar", 
+					width = 320, height = 40,
+					tooltipFormatter = spk_tool("", kmers_tbl$kmer, kmers_tbl$counts)
+					)
+}
+
 
 gc_density <- 
 	mclapply(1:length(params$fqfiles), function(y) { faster_gc(params$fqfiles[y]) })
@@ -193,16 +204,21 @@ q_score_density <-
 len_density <- 
 	mclapply(1:length(params$fqfiles), function(y) { faster_len(params$fqfiles[y]) })
 
+kmers_tbl_list <- 
+	mclapply(1:length(params$fqfiles), function(y) {fastkmers(params$fqfiles[y]) })
+
 gc_df <- data.frame(
 	file = basename(params$fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
 	q_score_dist = sapply(q_score_density, spark_phred),
-	len_dist = sapply(len_density, spark_len)
+	len_dist = sapply(len_density, spark_len),
+	kmer_counts = sapply(kmers_tbl_list, spark_kmers)
 )
 
 gc_df %>%
 	dplyr::arrange(file) %>%
-	kableExtra::kbl(escape = F) %>%
+	kableExtra::kbl(escape = F, 
+									caption = "Density distributions of GC-content, 'mean' q-score, length and k-mer counts (k = 3).") %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 
 ```

@@ -148,7 +148,7 @@ DT::datatable(df,
 
 ### GC-content, Phred-score and k-mer distributions
 ```{r table2, include=TRUE}
-sparkline(0) # load dependencies
+# sparkline(0) # load dependencies
 # see https://omnipotent.net/jquery.sparkline/#s-docs
 # on how to include both x and y values in spark
 # basically, supply values separated by a colon: x:y,x:y,x:y
@@ -240,7 +240,7 @@ gc_df <- data.frame(
 gc_df %>%
 	dplyr::arrange(file) %>%
 	kableExtra::kbl(escape = F, 
-									caption = "Density distributions of GC-content and 'mean' q-score. The q-scores 20 and 30 are in red, k-mer = 3.") %>%
+									caption = "Density distributions of GC-content, 'mean' q-score and k-mer counts (k = 3). The q-scores 20 and 30 are in red.") %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 
 ```
