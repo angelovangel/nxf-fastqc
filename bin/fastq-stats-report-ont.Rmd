@@ -217,7 +217,7 @@ gc_df <- data.frame(
 
 gc_df %>%
 	dplyr::arrange(file) %>%
-	kableExtra::kbl(escape = F, 
+	kableExtra::kbl(escape = F,
 									caption = "Density distributions of GC-content, 'mean' q-score, length and k-mer counts (k = 3).") %>%
 	kable_styling(fixed_thead = TRUE, bootstrap_options = c("responsive"))
 

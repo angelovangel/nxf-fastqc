@@ -49,6 +49,7 @@ log.info """
          Runtime data:
         -------------------------------------------
          Running with profile:   ${ANSI_GREEN}${workflow.profile}${ANSI_RESET}
+         Run container:          ${ANSI_GREEN}${workflow.container}${ANSI_RESET}
          Running as user:        ${ANSI_GREEN}${workflow.userName}${ANSI_RESET}
          Launch dir:             ${ANSI_GREEN}${workflow.launchDir}${ANSI_RESET}
          Base dir:               ${ANSI_GREEN}${baseDir}${ANSI_RESET}
@@ -213,9 +214,9 @@ process multiqc {
     --cl_config "section_comments: 
                     { fastp: '*This is ${ seqmode } data *<br>
                               Total reads before filter: ** ${ splitstring[0] } ** <br>
-                              Total reads    after filter: ** ${ splitstring[1] } ** <br>
+                              Total reads after filter: ** ${ splitstring[1] } ** <br>
                               Total bases before filter: ** ${ splitstring[2] } ** <br>
-                              Total bases    after filter: ** ${ splitstring[3] } ** <br> <br>
+                              Total bases after filter: ** ${ splitstring[3] } ** <br> <br>
                               See also the report: 
                               <a href="fastq-stats-report.html" target="_blank">fastq-stats-report.html</a>, 
                               which contains per-read data about Phred-score and k-mer distribution, N50 etc. <br>
