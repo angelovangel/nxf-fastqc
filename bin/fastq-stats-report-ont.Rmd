@@ -146,7 +146,7 @@ spk_tool <- function(label, x, values) {
 spark_gc <- function(gc_density_obj) {
 	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
 					lineWidth = 2,
-					fillColor = "#D6EAF8",
+					fillColor = "#F2F3F4",
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
@@ -159,7 +159,7 @@ spark_gc <- function(gc_density_obj) {
 spark_phred <- function(phred_density_obj) {
 	spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
 					lineWidth = 2,
-					fillColor = "#D6EAF8",
+					fillColor = "#F2F3F4",
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
@@ -176,7 +176,7 @@ spark_len <- function(len_density_obj) {
 	spk_chr(paste( len_density_obj$x, ":", len_density_obj$y, sep = ""), 
 					#type = "bar",
 					lineWidth = 2,
-					fillColor = "#D6EAF8",
+					fillColor = "#F2F3F4",
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
