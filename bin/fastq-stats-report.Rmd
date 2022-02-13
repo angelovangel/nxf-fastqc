@@ -197,7 +197,8 @@ spk_tool <- function(label, x, values) {
 spark_gc <- function(gc_density_obj) {
 	spk_chr(paste( round(gc_density_obj$x, digits = 2), ":", gc_density_obj$y, sep = "" ), 
 					lineWidth = 2,
-					fillColor = "#F2F3F4",
+					fillColor = "#D0D3D4",
+					lineColor = "#5D6D7E",
 					spotColor = FALSE,
 					minSpotColor = FALSE,
 					maxSpotColor = "red",
@@ -209,17 +210,21 @@ spark_gc <- function(gc_density_obj) {
 
 spark_phred <- function(phred_density_obj) {
 	#spk_chr(paste( round(phred_density_obj$x, digits = 2), ":", phred_density_obj$y, sep = ""),
+  fillcolor <- "#5D6D7E"
 	spk_chr(round(phred_density_obj$y, digits = 2), 
 					type = "bar",
 					 # to highlight q-value of 30, only array (60 elements) seems to work, don't know how to pass range map here
-					colorMap = c(rep("#3366cc", 19), "red", rep("#3366cc", 9), "red", rep("#3366cc", 30)),
+					colorMap = c(rep(fillcolor, 19), "red", rep(fillcolor, 9), "red", rep(fillcolor, 30)),
 					width = 220, height = 40,
 					tooltipFormatter = spk_tool("qscore ",phred_density_obj$x, round(phred_density_obj$y, 2))
 					)
 }
 
 spark_kmers <- function(kmers_tbl) {
+  fillcolor <- "#5D6D7E"
 	spk_chr(kmers_tbl$counts, type = "bar", 
+	        barColor = "#5D6D7E",
+	        #colorMap = c("red", rep(fillcolor, 15), "red", rep(fillcolor, 15), "red", rep(fillcolor, 15), "red", rep(fillcolor, 15)),
 					width = 340, height = 40,
 					tooltipFormatter = spk_tool("", kmers_tbl$kmer, kmers_tbl$counts)
 					)
