@@ -185,7 +185,7 @@ spk_tool <- function(label, x, values) {
    htmlwidgets::JS(
      sprintf(
  		"function(sparkline, options, field){ return %s[field[0].offset]; }",
-     jsonlite::toJSON(paste(label, x, ":",values, sep = " "))
+     jsonlite::toJSON(paste(label, x, ":", values, sep = " "))
      )
    )
 }
@@ -230,16 +230,17 @@ spark_kmers <- function(kmers_tbl) {
 					)
 }
 
-gc_density <- mclapply(1:length(fqfiles), function(y) { faster_gc(fqfiles[y]) })
-q_score_density <- mclapply(1:length(fqfiles), function(y) { faster_qscore(fqfiles[y]) })
-kmers_tbl_list <- mclapply(1:length(fqfiles), function(y) {fastkmers(fqfiles[y]) })
+gc_density <- parallel::mcmapply(faster_gc, fqfiles, SIMPLIFY = FALSE)
+q_score_density <- parallel::mcmapply(faster_qscore, fqfiles, SIMPLIFY = FALSE)
+kmers_tbl_list <- parallel::mcmapply(fastkmers, fqfiles, SIMPLIFY = FALSE)
 
 gc_df <- data.frame(
 	file = basename(fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
 	#content_percycle = sapply(jsonfiles, spark_content),
 	q_score_dist = sapply(q_score_density, spark_phred),
-	kmer_counts = sapply(kmers_tbl_list, spark_kmers)
+	kmer_counts = sapply(kmers_tbl_list, spark_kmers), 
+	row.names =NULL
 )
 
 gc_df %>%

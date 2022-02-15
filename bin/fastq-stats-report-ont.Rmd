@@ -199,24 +199,18 @@ spark_kmers <- function(kmers_tbl) {
 }
 
 
-gc_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { faster_gc(params$fqfiles[y]) })
-
-q_score_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { faster_qscore(params$fqfiles[y]) })
-
-len_density <- 
-	mclapply(1:length(params$fqfiles), function(y) { faster_len(params$fqfiles[y]) })
-
-kmers_tbl_list <- 
-	mclapply(1:length(params$fqfiles), function(y) {fastkmers(params$fqfiles[y]) })
+gc_density <- parallel::mcmapply(faster_gc, params$fqfiles, SIMPLIFY = FALSE)
+q_score_density <- parallel::mcmapply(faster_qscore, params$fqfiles, SIMPLIFY = FALSE)
+len_density <- parallel::mcmapply(faster_len, params$fqfiles, SIMPLIFY = FALSE)
+kmers_tbl_list <- parallel::mcmapply(fastkmers, params$fqfiles, SIMPLIFY = FALSE)
 
 gc_df <- data.frame(
 	file = basename(params$fqfiles),
 	gc_content_dist = sapply(gc_density, spark_gc),
 	q_score_dist = sapply(q_score_density, spark_phred),
 	len_dist = sapply(len_density, spark_len),
-	kmer_counts = sapply(kmers_tbl_list, spark_kmers)
+	kmer_counts = sapply(kmers_tbl_list, spark_kmers), 
+	row.names = NULL
 )
 
 gc_df %>%
