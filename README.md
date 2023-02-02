@@ -7,7 +7,7 @@ A simple pipeline for QC of fastq files, written in [nextflow](https://www.nextf
 For a bunch of fastq files in a directory (Illumina PE or SE, Nanopore), run it with:
 
 ```
-nextflow run angelovangel/nextflow-fastp --readsdir path/to/fastqfiles/
+nextflow run angelovangel/nxf-fastqc --readsdir path/to/fastqfiles/
 ```
 
 For Nanopore reads, add `-profile ont` to the command.
@@ -17,17 +17,17 @@ The pipeline executes [fastp](https://github.com/OpenGene/fastp), saves the filt
 For all available pipeline options, try
 
 ```
-nextflow run angelovangel/nextflow-fastp --help
+nextflow run angelovangel/nxf-fastqc --help
 ```
 
 If you have conda or docker, you can run the pipeline in a conda environment or in a docker container. Just add `-profile conda` or `-profile docker` to the nextflow command:
 ```
-nextflow run angelovangel/nextflow-fastp --readsdir path/to/fastqfiles/ -profile conda
+nextflow run angelovangel/nxf-fastqc --readsdir path/to/fastqfiles/ -profile conda
 ```
 
 To run it with the included small test dataset
 ```bash
-nextflow run angelovangel/nextflow-fastp -profile test 
+nextflow run angelovangel/nxf-fastqc -profile test 
 # or combine profiles, e.g. -profile test,docker
 ```
 
